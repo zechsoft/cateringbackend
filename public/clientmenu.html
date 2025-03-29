@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Menu - Client View</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #daa520; /* Changed to golden amber color */
+            --secondary-color: #d6b16e; /* Lighter amber/gold for subcategories */
+            --background-color: #ffffff; /* Changed to white */
+            --text-color: #333333; /* Darker text color */
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .menu-title {
+            text-align: center;
+            font-size: 3rem;
+            color: #000000; /* Changed to black */
+            margin-bottom: 40px;
+            font-style: italic; /* Added italic to match the image */
+        }
+
+        .category-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 12px 25px;
+            border: 1px solid #daa520; /* Added border */
+            background-color: var(--white);
+            color: var(--text-color);
+            cursor: pointer;
+            border-radius: 50px;
+            font-weight: 600;
+            text-transform: capitalize; /* Changed from uppercase */
+            transition: all 0.3s ease;
+        }
+
+        .category-btn.active {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .subcategory-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .subcategory-btn {
+            padding: 8px 20px;
+            border: 1px solid var(--secondary-color);
+            background-color: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .subcategory-btn.active {
+            background-color: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .menu-items-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .menu-item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+            width: 100%;
+        }
+
+        .menu-item {
+            background-color: var(--white);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .menu-item h3 {
+            color: var(--text-color); /* Changed to text color */
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            flex-grow: 1;
+        }
+
+        .menu-item p {
+            color: var(--text-color);
+            margin: 5px 0;
+        }
+
+        .menu-item .price {
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin-top: auto;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-color);
+            padding: 50px;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .menu-title {
+                font-size: 2rem;
+            }
+
+            .category-container,
+            .subcategory-container {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .menu-item-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .category-btn,
+            .subcategory-btn {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="menu-title">Most Popular Food in the World</h1>
+        <div class="category-container" id="category-buttons"></div>
+        <div class="subcategory-container" id="subcategory-buttons"></div>
+        <div class="menu-items-container" id="menu-items-container"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const categoryButtons = document.getElementById('category-buttons');
+            const subcategoryButtons = document.getElementById('subcategory-buttons');
+            const menuItemsContainer = document.getElementById('menu-items-container');
+
+            let menuData = {};
+            let activeCategory = '';
+            let activeSubcategory = '';
+
+            async function fetchMenuItems() {
+                try {
+                    const response = await fetch('http://localhost:3000/api/menu');
+                    const menuItems = await response.json();
+                    
+                    menuData = menuItems.reduce((acc, item) => {
+                        if (!acc[item.category]) {
+                            acc[item.category] = {};
+                        }
+                        if (!acc[item.category][item.subcategory]) {
+                            acc[item.category][item.subcategory] = [];
+                        }
+                        acc[item.category][item.subcategory].push(item);
+                        return acc;
+                    }, {});
+
+                    const categories = ['Morning', 'Lunch', 'Dinner', 'Desserts', 'Our Special'];
+                    categoryButtons.innerHTML = '';
+                    
+                    categories.forEach((category, index) => {
+                        const categoryBtn = document.createElement('button');
+                        categoryBtn.textContent = category;
+                        categoryBtn.classList.add('category-btn');
+                        categoryBtn.addEventListener('click', () => selectCategory(category));
+                        
+                        if (index === 0) {
+                            categoryBtn.classList.add('active');
+                            activeCategory = category;
+                        }
+                        
+                        categoryButtons.appendChild(categoryBtn);
+                    });
+
+                    selectCategory(activeCategory);
+                } catch (error) {
+                    console.error('Error fetching menu items:', error);
+                    menuItemsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <p>Unable to load menu. Please try again later.</p>
+                        </div>
+                    `;
+                }
+            }
+
+            function selectCategory(category) {
+                activeCategory = category;
+                
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.textContent === category);
+                });
+
+                const subcategories = menuData[category] ? Object.keys(menuData[category]) : [];
+                subcategoryButtons.innerHTML = '';
+                
+                if (subcategories.length > 0) {
+                    subcategories.forEach((subcategory, index) => {
+                        const subcategoryBtn = document.createElement('button');
+                        subcategoryBtn.textContent = subcategory;
+                        subcategoryBtn.classList.add('subcategory-btn');
+                        subcategoryBtn.addEventListener('click', () => selectSubcategory(subcategory));
+                        
+                        if (index === 0) {
+                            subcategoryBtn.classList.add('active');
+                            activeSubcategory = subcategory;
+                        }
+                        
+                        subcategoryButtons.appendChild(subcategoryBtn);
+                    });
+
+                    selectSubcategory(activeSubcategory);
+                } else {
+                    // If the API isn't working, let's show some sample data
+                    showSampleMenu(category);
+                }
+            }
+
+            function selectSubcategory(subcategory) {
+                activeSubcategory = subcategory;
+                
+                document.querySelectorAll('.subcategory-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.textContent === subcategory);
+                });
+
+                const menuItems = menuData[activeCategory][subcategory] || [];
+                
+                if (menuItems.length > 0) {
+                    const menuItemGrid = document.createElement('div');
+                    menuItemGrid.classList.add('menu-item-grid');
+                    
+                    menuItems.forEach(item => {
+                        const itemElement = document.createElement('div');
+                        itemElement.classList.add('menu-item');
+                        itemElement.innerHTML = `
+                            <h3>${item.name}</h3>
+                            <p>${item.description}</p>
+                            <p class="price">Price: $${item.price.toFixed(2)}</p>
+                        `;
+                        menuItemGrid.appendChild(itemElement);
+                    });
+                    
+                    menuItemsContainer.innerHTML = '';
+                    menuItemsContainer.appendChild(menuItemGrid);
+                } else {
+                    // If no items from API, show sample menu
+                    showSampleMenu(activeCategory);
+                }
+            }
+
+            function showSampleMenu(category) {
+                // Different sample menu items based on category
+                let menuItems = [];
+                
+                if (category === 'Desserts') {
+                    menuItems = [
+                        { name: "Gulab Jamun", description: "Deep-fried milk solids soaked in sugar syrup flavored with cardamom and rose water." },
+                        { name: "Rasgulla", description: "Soft spongy cottage cheese balls soaked in light sugar syrup." },
+                        { name: "Jalebi", description: "Deep-fried pretzel-shaped sweets soaked in sugar syrup." },
+                        { name: "Kheer", description: "Creamy rice pudding flavored with cardamom, saffron, and dried fruits." },
+                        { name: "Gajar Ka Halwa", description: "Sweet pudding made with grated carrots, milk, sugar, and ghee." },
+                        { name: "Ras Malai", description: "Soft cottage cheese patties immersed in chilled creamy milk." },
+                        { name: "Kulfi", description: "Traditional Indian ice cream made with thickened milk and aromatic spices." },
+                        { name: "Shrikhand", description: "Strained yogurt dessert flavored with saffron, cardamom, and nuts." }
+                    ];
+                } else {
+                    // Default menu items for other categories
+                    menuItems = [
+                        { name: "Dates Halwa", description: "A rich and healthy sweet dish made with dates, ghee, and nuts." },
+                        { name: "Thatte Idli", description: "A large, flat idli served with chutneys and sambar." },
+                        { name: "Palak Poori", description: "Deep-fried wheat bread infused with nutritious spinach." },
+                        { name: "Carrot Idiyappam", description: "Steamed rice noodles flavored with carrot-based gravy." },
+                        { name: "Foxtail Millet Pongal", description: "A nutritious Pongal made with foxtail millet, moong dal, and spices." },
+                        { name: "Sambar", description: "A spicy and tangy lentil soup with vegetables and aromatic spices." },
+                        { name: "Channa Masala", description: "A classic North Indian dish with chickpeas in a spicy tomato gravy." },
+                        { name: "Paal Kuruma", description: "A rich and creamy milk-based vegetable curry." }
+                    ];
+                }
+
+                const menuItemGrid = document.createElement('div');
+                menuItemGrid.classList.add('menu-item-grid');
+                
+                menuItems.forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.classList.add('menu-item');
+                    itemElement.innerHTML = `
+                        <h3>${item.name}</h3>
+                        <p>${item.description}</p>
+                    `;
+                    menuItemGrid.appendChild(itemElement);
+                });
+                
+                menuItemsContainer.innerHTML = '';
+                menuItemsContainer.appendChild(menuItemGrid);
+            }
+
+            // Show subcategory buttons
+            document.getElementById('subcategory-buttons').innerHTML = `
+                <button class="subcategory-btn active">MENU 1</button>
+                <button class="subcategory-btn">MENU 2</button>
+                <button class="subcategory-btn">MENU 3</button>
+                <button class="subcategory-btn">MENU 4</button>
+                <button class="subcategory-btn">MENU 5</button>
+            `;
+
+            // Initial fetch of menu items (or show sample if fetch fails)
+            try {
+                fetchMenuItems();
+            } catch (error) {
+                showSampleMenu('Morning');
+            }
+        });
+    </script>
+</body>
+</html>
