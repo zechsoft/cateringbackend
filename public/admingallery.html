@@ -124,14 +124,16 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         }
 
-        #media-upload-form {
+        #media-upload-form, #media-edit-form {
             display: grid;
             gap: 20px;
         }
 
         #media-upload-form input, 
         #media-upload-form select, 
-        #media-upload-form textarea {
+        #media-upload-form textarea,
+        #media-edit-form input,
+        #media-edit-form textarea {
             width: 100%;
             padding: 12px;
             border: 2px solid var(--secondary-color);
@@ -141,7 +143,9 @@
 
         #media-upload-form input:focus, 
         #media-upload-form select:focus, 
-        #media-upload-form textarea:focus {
+        #media-upload-form textarea:focus,
+        #media-edit-form input:focus,
+        #media-edit-form textarea:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(255,107,107,0.2);
@@ -214,6 +218,79 @@
             margin-bottom: 5px;
         }
 
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .action-buttons button {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+
+        .edit-btn {
+            background-color: #ffa41b;
+        }
+
+        .delete-btn {
+            background-color: #ef4b4b;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .confirm-dialog {
+            text-align: center;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .confirm-actions button {
+            padding: 8px 20px;
+        }
+
+        .cancel-btn {
+            background-color: #808080;
+        }
+
         /* Styling for image placeholder fallback */
         .placeholder-image {
             background: linear-gradient(45deg, #f3f3f3 25%, #e6e6e6 25%, #e6e6e6 50%, #f3f3f3 50%, #f3f3f3 75%, #e6e6e6 75%, #e6e6e6 100%);
@@ -263,7 +340,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>vignesh Catering service / gallery</h1>
+            <h1>Vignesh Catering Service / Gallery</h1>
             <nav>
                 <a href="adminvignesh.html">Menu</a>
                 <a href="admingallery.html">Gallery</a>
@@ -294,157 +371,320 @@
         </section>
     </div>
 
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-edit-modal">&times;</span>
+            <h2>Edit Media</h2>
+            <form id="media-edit-form">
+                <input type="hidden" id="edit-media-id">
+                <input type="text" id="edit-media-title" placeholder="Media Title" required>
+                <textarea id="edit-media-description" placeholder="Description"></textarea>
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-delete-modal">&times;</span>
+            <div class="confirm-dialog">
+                <h2>Confirm Delete</h2>
+                <p>Are you sure you want to delete this media? This action cannot be undone.</p>
+                <input type="hidden" id="delete-media-id">
+                <div class="confirm-actions">
+                    <button id="confirm-delete" class="delete-btn">Delete</button>
+                    <button id="cancel-delete" class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const mediaUploadForm = document.getElementById('media-upload-form');
-    const imagesContainer = document.getElementById('images-container');
-    const videosContainer = document.getElementById('videos-container');
-    
-    // Base URL for the deployed backend
-    const API_BASE_URL = 'https://catering-backend-pewm.onrender.com';
+    document.addEventListener('DOMContentLoaded', () => {
+        const mediaUploadForm = document.getElementById('media-upload-form');
+        const mediaEditForm = document.getElementById('media-edit-form');
+        const imagesContainer = document.getElementById('images-container');
+        const videosContainer = document.getElementById('videos-container');
+        const editModal = document.getElementById('edit-modal');
+        const deleteModal = document.getElementById('delete-modal');
+        
+        // Base URL for the deployed backend
+        const API_BASE_URL = 'https://catering-backend-pewm.onrender.com';
 
-    // Create custom placeholder element instead of using via.placeholder.com
-    function createPlaceholderElement(title) {
-        const placeholderDiv = document.createElement('div');
-        placeholderDiv.className = 'placeholder-image';
-        placeholderDiv.style.width = '100%';
-        placeholderDiv.style.height = '300px';
-        placeholderDiv.innerHTML = `<span>Image Not Found: ${title || 'Untitled'}</span>`;
-        return placeholderDiv;
-    }
+        // Create custom placeholder element instead of using via.placeholder.com
+        function createPlaceholderElement(title) {
+            const placeholderDiv = document.createElement('div');
+            placeholderDiv.className = 'placeholder-image';
+            placeholderDiv.style.width = '100%';
+            placeholderDiv.style.height = '300px';
+            placeholderDiv.innerHTML = `<span>Image Not Found: ${title || 'Untitled'}</span>`;
+            return placeholderDiv;
+        }
 
-    // Fetch and display media
-    async function fetchMedia() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/media`);
-            
-            if (!response.ok) {
-                throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`);
-            }
-            
-            const mediaList = await response.json();
-
-            // Clear existing containers
-            imagesContainer.innerHTML = '';
-            videosContainer.innerHTML = '';
-
-            mediaList.forEach((media, index) => {
-                const mediaElement = document.createElement('div');
-                mediaElement.classList.add('media-item');
-                mediaElement.style.animationDelay = `${index * 0.1}s`;
-
-                if (media.type === 'image') {
-                    // Create image container
-                    const imgContainer = document.createElement('div');
-                    imgContainer.style.width = '100%';
-                    imgContainer.style.height = '300px';
-                    imgContainer.style.overflow = 'hidden';
-                    
-                    // Create image element
-                    const img = document.createElement('img');
-                    img.alt = media.title || 'Image';
-                    img.src = `${API_BASE_URL}/uploads/images/${media.filename}`;
-                    
-                    // Handle image loading error
-                    img.onerror = function() {
-                        this.style.display = 'none';
-                        imgContainer.appendChild(createPlaceholderElement(media.title));
-                    };
-                    
-                    imgContainer.appendChild(img);
-                    mediaElement.appendChild(imgContainer);
-                    
-                    // Add media info
-                    const infoDiv = document.createElement('div');
-                    infoDiv.className = 'media-info';
-                    infoDiv.innerHTML = `
-                        <h3>${media.title || 'Untitled Image'}</h3>
-                        <p>${media.description || ''}</p>
-                    `;
-                    mediaElement.appendChild(infoDiv);
-                    
-                    imagesContainer.appendChild(mediaElement);
-                } else if (media.type === 'video') {
-                    mediaElement.innerHTML = `
-                        <video controls>
-                            <source src="${API_BASE_URL}/uploads/videos/${media.filename}" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                        <div class="media-info">
-                            <h3>${media.title || 'Untitled Video'}</h3>
-                            <p>${media.description || ''}</p>
-                        </div>
-                    `;
-                    
-                    // Add error handling for video
-                    const videoElement = mediaElement.querySelector('video');
-                    videoElement.onerror = function() {
-                        this.style.display = 'none';
-                        const errorMsg = document.createElement('div');
-                        errorMsg.className = 'placeholder-image';
-                        errorMsg.innerHTML = '<span>Video could not be loaded</span>';
-                        this.parentNode.insertBefore(errorMsg, this.nextSibling);
-                    };
-                    
-                    videosContainer.appendChild(mediaElement);
+        // Fetch and display media
+        async function fetchMedia() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/media`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`);
                 }
-            });
+                
+                const mediaList = await response.json();
+
+                // Clear existing containers
+                imagesContainer.innerHTML = '';
+                videosContainer.innerHTML = '';
+
+                mediaList.forEach((media, index) => {
+                    const mediaElement = document.createElement('div');
+                    mediaElement.classList.add('media-item');
+                    mediaElement.style.animationDelay = `${index * 0.1}s`;
+                    mediaElement.dataset.id = media._id; // Store the media ID in the DOM
+
+                    if (media.type === 'image') {
+                        // Create image container
+                        const imgContainer = document.createElement('div');
+                        imgContainer.style.width = '100%';
+                        imgContainer.style.height = '300px';
+                        imgContainer.style.overflow = 'hidden';
+                        
+                        // Create image element
+                        const img = document.createElement('img');
+                        img.alt = media.title || 'Image';
+                        img.src = `${API_BASE_URL}/uploads/images/${media.filename}`;
+                        
+                        // Handle image loading error
+                        img.onerror = function() {
+                            this.style.display = 'none';
+                            imgContainer.appendChild(createPlaceholderElement(media.title));
+                        };
+                        
+                        imgContainer.appendChild(img);
+                        mediaElement.appendChild(imgContainer);
+                        
+                        // Add media info
+                        const infoDiv = document.createElement('div');
+                        infoDiv.className = 'media-info';
+                        infoDiv.innerHTML = `
+                            <h3>${media.title || 'Untitled Image'}</h3>
+                            <p>${media.description || ''}</p>
+                            <div class="action-buttons">
+                                <button class="edit-btn" data-id="${media._id}">Edit</button>
+                                <button class="delete-btn" data-id="${media._id}">Delete</button>
+                            </div>
+                        `;
+                        mediaElement.appendChild(infoDiv);
+                        
+                        imagesContainer.appendChild(mediaElement);
+                    } else if (media.type === 'video') {
+                        mediaElement.innerHTML = `
+                            <video controls>
+                                <source src="${API_BASE_URL}/uploads/videos/${media.filename}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <div class="media-info">
+                                <h3>${media.title || 'Untitled Video'}</h3>
+                                <p>${media.description || ''}</p>
+                                <div class="action-buttons">
+                                    <button class="edit-btn" data-id="${media._id}">Edit</button>
+                                    <button class="delete-btn" data-id="${media._id}">Delete</button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add error handling for video
+                        const videoElement = mediaElement.querySelector('video');
+                        videoElement.onerror = function() {
+                            this.style.display = 'none';
+                            const errorMsg = document.createElement('div');
+                            errorMsg.className = 'placeholder-image';
+                            errorMsg.innerHTML = '<span>Video could not be loaded</span>';
+                            this.parentNode.insertBefore(errorMsg, this.nextSibling);
+                        };
+                        
+                        videosContainer.appendChild(mediaElement);
+                    }
+                });
+                
+                // Show message if no media found
+                if (mediaList.length === 0) {
+                    imagesContainer.innerHTML = '<p>No images found. Upload some images to get started!</p>';
+                    videosContainer.innerHTML = '<p>No videos found. Upload some videos to get started!</p>';
+                }
+
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', openEditModal);
+                });
+
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', openDeleteModal);
+                });
+            } catch (error) {
+                console.error('Error fetching media:', error);
+                imagesContainer.innerHTML = '<p class="error">Failed to load images. Please try again later.</p>';
+                videosContainer.innerHTML = '<p class="error">Failed to load videos. Please try again later.</p>';
+            }
+        }
+
+        // Upload media
+        mediaUploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const mediaType = document.getElementById('media-type').value;
+            const mediaFile = document.getElementById('media-file').files[0];
+            const mediaTitle = document.getElementById('media-title').value;
+            const mediaDescription = document.getElementById('media-description').value;
+
+            if (!mediaFile) {
+                alert('Please select a file to upload');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('media', mediaFile);
+            formData.append('type', mediaType);
+            formData.append('title', mediaTitle);
+            formData.append('description', mediaDescription);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/media/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('Media uploaded successfully!');
+                    fetchMedia(); // Refresh media list
+                    mediaUploadForm.reset(); // Clear form
+                } else {
+                    const errorData = await response.json();
+                    alert(`Upload failed: ${errorData.message || 'Unknown error'}`);
+                    console.error('Upload error:', errorData);
+                }
+            } catch (error) {
+                alert('Error uploading media. Please try again.');
+                console.error('Error uploading media:', error);
+            }
+        });
+
+        // Open edit modal
+        async function openEditModal(e) {
+            const mediaId = e.target.dataset.id;
             
-            // Show message if no media found
-            if (mediaList.length === 0) {
-                imagesContainer.innerHTML = '<p>No images found. Upload some images to get started!</p>';
-                videosContainer.innerHTML = '<p>No videos found. Upload some videos to get started!</p>';
+            try {
+                // Fetch the media item details
+                const response = await fetch(`${API_BASE_URL}/api/media`);
+                const mediaList = await response.json();
+                const mediaItem = mediaList.find(item => item._id === mediaId);
+                
+                if (mediaItem) {
+                    // Populate the edit form
+                    document.getElementById('edit-media-id').value = mediaId;
+                    document.getElementById('edit-media-title').value = mediaItem.title || '';
+                    document.getElementById('edit-media-description').value = mediaItem.description || '';
+                    
+                    // Show the modal
+                    editModal.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error fetching media details:', error);
+                alert('Could not load media details. Please try again.');
             }
-        } catch (error) {
-            console.error('Error fetching media:', error);
-            imagesContainer.innerHTML = '<p class="error">Failed to load images. Please try again later.</p>';
-            videosContainer.innerHTML = '<p class="error">Failed to load videos. Please try again later.</p>';
-        }
-    }
-
-    // Upload media
-    mediaUploadForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const mediaType = document.getElementById('media-type').value;
-        const mediaFile = document.getElementById('media-file').files[0];
-        const mediaTitle = document.getElementById('media-title').value;
-        const mediaDescription = document.getElementById('media-description').value;
-
-        if (!mediaFile) {
-            alert('Please select a file to upload');
-            return;
         }
 
-        const formData = new FormData();
-        formData.append('media', mediaFile);
-        formData.append('type', mediaType);
-        formData.append('title', mediaTitle);
-        formData.append('description', mediaDescription);
+        // Open delete confirmation modal
+        function openDeleteModal(e) {
+            const mediaId = e.target.dataset.id;
+            document.getElementById('delete-media-id').value = mediaId;
+            deleteModal.style.display = 'flex';
+        }
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/media/upload`, {
-                method: 'POST',
-                body: formData
-            });
+        // Close modals
+        document.getElementById('close-edit-modal').addEventListener('click', () => {
+            editModal.style.display = 'none';
+        });
 
-            if (response.ok) {
-                alert('Media uploaded successfully!');
-                fetchMedia(); // Refresh media list
-                mediaUploadForm.reset(); // Clear form
-            } else {
-                const errorData = await response.json();
-                alert(`Upload failed: ${errorData.message || 'Unknown error'}`);
-                console.error('Upload error:', errorData);
+        document.getElementById('close-delete-modal').addEventListener('click', () => {
+            deleteModal.style.display = 'none';
+        });
+
+        document.getElementById('cancel-delete').addEventListener('click', () => {
+            deleteModal.style.display = 'none';
+        });
+
+        // Submit edit form
+        mediaEditForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mediaId = document.getElementById('edit-media-id').value;
+            const mediaTitle = document.getElementById('edit-media-title').value;
+            const mediaDescription = document.getElementById('edit-media-description').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/media/${mediaId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: mediaTitle,
+                        description: mediaDescription
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Media updated successfully!');
+                    editModal.style.display = 'none';
+                    fetchMedia(); // Refresh media list
+                } else {
+                    const errorData = await response.json();
+                    alert(`Update failed: ${errorData.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error updating media:', error);
+                alert('Error updating media. Please try again.');
             }
-        } catch (error) {
-            alert('Error uploading media. Please try again.');
-            console.error('Error uploading media:', error);
-        }
+        });
+
+        // Confirm delete
+        document.getElementById('confirm-delete').addEventListener('click', async () => {
+            const mediaId = document.getElementById('delete-media-id').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/media/${mediaId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('Media deleted successfully!');
+                    deleteModal.style.display = 'none';
+                    fetchMedia(); // Refresh media list
+                } else {
+                    const errorData = await response.json();
+                    alert(`Delete failed: ${errorData.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting media:', error);
+                alert('Error deleting media. Please try again.');
+            }
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                editModal.style.display = 'none';
+            }
+            if (e.target === deleteModal) {
+                deleteModal.style.display = 'none';
+            }
+        });
+
+        // Initial fetch of media
+        fetchMedia();
     });
-
-    // Initial fetch of media
-    fetchMedia();
-});
     </script>
 </body>
 </html>
