@@ -1,3 +1,5 @@
+process.removeAllListeners('warning'); // Suppress deprecation warnings
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -9,16 +11,28 @@ const fs = require('fs');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+// Route imports
+const menuRoutes = require('./routes/menuRoutes');
+const mediaRoutes = require('./routes/mediaRoutes');
+const eventRoutes = require('./routes/eventRoutes');
+const blogRoutes = require('./routes/blogRoutes');
+const serviceVideoRoutes = require('./routes/serviceVideoRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Explicit port binding for Render
+if (process.env.RENDER) {
+  app.set('port', PORT);
+}
 
 // ================== SECURITY MIDDLEWARE ==================
 app.use(helmet());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500 // Increased from 100 to 500 for better usability
 });
 app.use(limiter);
 
@@ -29,40 +43,42 @@ const allowedOrigins = [
   'http://localhost:5500',
   'http://127.0.0.1:5500',
   'https://catering-backend-6dyl.onrender.com',
-  'https://your-frontend-domain.com', // Add your frontend domain here
-  'https://your-render-frontend.onrender.com' // If you have a frontend on Render
+  'https://your-actual-frontend.com' // REPLACE WITH YOUR FRONTEND URL
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin && process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
     
-    // Allow all subdomains of your domains
+    // Check against allowed origins
     const isAllowed = allowedOrigins.some(allowedOrigin => 
-      origin.startsWith(allowedOrigin) || 
-      origin.includes('localhost') || 
-      origin.includes('127.0.0.1') ||
-      origin.includes('render.com')
+      origin === allowedOrigin ||
+      origin?.startsWith(allowedOrigin) ||
+      origin?.includes('localhost') || 
+      origin?.includes('127.0.0.1') ||
+      origin?.includes('render.com')
     );
     
     if (isAllowed) {
       return callback(null, true);
     }
     
-    console.log('Blocked origin:', origin);
-    callback(new Error('Not allowed by CORS'));
+    console.log('Blocked Origin:', origin);
+    callback(new Error(`Not allowed by CORS. Allowed origins: ${allowedOrigins.join(', ')}`));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 204
 };
 
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
-// ================== GLOBAL PREFLIGHT HANDLER ==================
+// Handle preflight requests for all routes
 app.options('*', cors(corsOptions));
 
 // ================== MIDDLEWARE ==================
@@ -73,26 +89,78 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// ================== ROUTES ==================
-const menuRoutes = require('./routes/menuRoutes');
-const mediaRoutes = require('./routes/mediaRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-const blogRoutes = require('./routes/blogRoutes');
-const serviceVideoRoutes = require('./routes/serviceVideoRoutes');
+// ================== FILE UPLOAD CONFIG ==================
+const dirs = [
+  '../uploads/images',
+  '../uploads/videos',
+  '../uploads/images/events',
+  '../uploads/images/blogs',
+  '../uploads/service-videos'
+];
 
+// Create upload directories if they don't exist
+dirs.forEach(dir => {
+  const fullPath = path.join(__dirname, dir);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+  }
+});
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    let uploadPath;
+    
+    if (req.baseUrl.includes('/blogs')) {
+      uploadPath = path.join(__dirname, '../uploads/images/blogs');
+    } else if (req.baseUrl.includes('/service-videos')) {
+      uploadPath = path.join(__dirname, '../uploads/service-videos');
+    } else {
+      const isImage = file.mimetype.startsWith('image');
+      uploadPath = isImage 
+        ? path.join(__dirname, '../uploads/images')
+        : path.join(__dirname, '../uploads/videos');
+    }
+    
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/mpeg'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only images (JPEG, PNG, GIF) and videos (MP4, MPEG) are allowed.'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit
+  }
+});
+
+// ================== ROUTES ==================
 app.use('/api/menu', menuRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/service-videos', serviceVideoRoutes);
 
-// Health check endpoint
+// Enhanced health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date(),
     environment: process.env.NODE_ENV || 'development',
-    allowedOrigins: allowedOrigins
+    allowedOrigins: allowedOrigins,
+    renderExternalUrl: process.env.RENDER_EXTERNAL_URL || 'Not on Render'
   });
 });
 
@@ -100,35 +168,63 @@ app.get('/api/health', (req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   
-  if (err.message === 'Not allowed by CORS') {
-    return res.status(403).json({
-      message: 'CORS policy violation',
-      allowedOrigins: allowedOrigins,
-      yourOrigin: req.headers.origin || 'Unknown'
+  // Handle multer errors
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      message: 'File upload error',
+      error: err.message
     });
   }
   
+  // Handle CORS errors
+  if (err.message.includes('Not allowed by CORS')) {
+    return res.status(403).json({
+      message: 'CORS policy violation',
+      yourOrigin: req.headers.origin || 'Unknown',
+      allowedOrigins: allowedOrigins,
+      docs: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'
+    });
+  }
+  
+  // Generic error handler
   res.status(500).json({
     message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
+    requestId: req.id || 'none'
   });
 });
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ message: 'Endpoint not found' });
+  res.status(404).json({ 
+    message: 'Endpoint not found',
+    path: req.path,
+    method: req.method
+  });
 });
 
 // ================== SERVER START ==================
 connectDB()
   .then(() => {
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`Allowed origins:\n${allowedOrigins.join('\n')}`);
+      console.log(`
+      =====================================
+      Server successfully started!
+      Port: ${PORT}
+      Environment: ${process.env.NODE_ENV || 'development'}
+      =====================================
+      Allowed Origins:
+      ${allowedOrigins.map(o => `- ${o}`).join('\n')}
+      ${process.env.RENDER ? `\nRender External URL: ${process.env.RENDER_EXTERNAL_URL}` : ''}
+      `);
     });
   })
   .catch(err => {
-    console.error('Database connection failed:', err);
+    console.error(`
+    =====================================
+    FATAL ERROR: Database connection failed
+    =====================================
+    Error: ${err.message}
+    `);
     process.exit(1);
   });
