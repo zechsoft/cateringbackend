@@ -2,32 +2,26 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const Event = require('../models/eventModel');
 
-// Configure storage with absolute paths
+// Multer storage configuration for event images
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../uploads/images/events');
-        fs.mkdirSync(uploadPath, { recursive: true });
-        cb(null, uploadPath);
+        cb(null, './uploads/images/events');
     },
     filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const filename = `event-${Date.now()}${ext}`;
-        cb(null, filename);
+        cb(null, 'event-' + Date.now() + path.extname(file.originalname));
     }
 });
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Only JPEG, PNG, and GIF images are allowed'));
+            cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed.'));
         }
     }
 });
@@ -35,69 +29,43 @@ const upload = multer({
 // Create new event
 router.post('/', upload.single('image'), async (req, res) => {
     try {
-        const { title, description, date, time, location, maxAttendees } = req.body;
-        
-        if (!title || !date || !location) {
-            throw new Error('Title, date, and location are required');
-        }
-
         const eventData = {
-            title,
-            description: description || '',
-            date: new Date(date),
-            time: time || '19:00',
-            location,
-            maxAttendees: maxAttendees ? parseInt(maxAttendees) : null,
-            status: 'upcoming',
-            registeredAttendees: 0
+            title: req.body.title,
+            description: req.body.description,
+            date: new Date(req.body.date),
+            time: req.body.time,
+            location: req.body.location,
+            maxAttendees: req.body.maxAttendees || null,
+            status: req.body.status || 'upcoming'
         };
 
+        // Add image if uploaded
         if (req.file) {
             eventData.image = req.file.filename;
         }
 
         const event = new Event(eventData);
         const savedEvent = await event.save();
-        
-        res.status(201).json({
-            success: true,
-            event: savedEvent
-        });
+        res.status(201).json(savedEvent);
     } catch (error) {
-        if (req.file) {
-            fs.unlink(req.file.path, () => {});
-        }
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        res.status(400).json({ message: error.message });
     }
 });
 
-// Get all events with filtering
+// Get all events
 router.get('/', async (req, res) => {
     try {
-        const { status } = req.query;
+        // Filter by status if provided
         const filter = {};
-        
-        if (status) {
-            filter.status = status;
+        if (req.query.status) {
+            filter.status = req.query.status;
         }
 
-        const events = await Event.find(filter)
-            .sort({ date: 1 })
-            .select('-__v');
-            
-        res.json({
-            success: true,
-            count: events.length,
-            events
-        });
+        // Sort by date
+        const events = await Event.find(filter).sort({ date: 1 });
+        res.json(events);
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch events'
-        });
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -108,87 +76,58 @@ router.get('/upcoming', async (req, res) => {
         const events = await Event.find({
             date: { $gte: currentDate },
             status: 'upcoming'
-        })
-        .sort({ date: 1 })
-        .select('-__v');
+        }).sort({ date: 1 });
         
-        res.json({
-            success: true,
-            count: events.length,
-            events
-        });
+        res.json(events);
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch upcoming events'
-        });
+        res.status(500).json({ message: error.message });
     }
 });
 
-// Get single event
+// Get single event by ID
 router.get('/:id', async (req, res) => {
     try {
-        const event = await Event.findById(req.params.id)
-            .select('-__v');
-            
+        const event = await Event.findById(req.params.id);
         if (!event) {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
-            });
+            return res.status(404).json({ message: 'Event not found' });
         }
-        
-        res.json({
-            success: true,
-            event
-        });
+        res.json(event);
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch event'
-        });
+        res.status(500).json({ message: error.message });
     }
 });
 
 // Update event
 router.put('/:id', upload.single('image'), async (req, res) => {
     try {
-        const updates = {
+        const eventData = {
             title: req.body.title,
             description: req.body.description,
-            date: req.body.date ? new Date(req.body.date) : undefined,
+            date: new Date(req.body.date),
             time: req.body.time,
             location: req.body.location,
-            maxAttendees: req.body.maxAttendees ? parseInt(req.body.maxAttendees) : null,
+            maxAttendees: req.body.maxAttendees || null,
             status: req.body.status
         };
 
+        // Add image if uploaded
         if (req.file) {
-            updates.image = req.file.filename;
+            eventData.image = req.file.filename;
         }
 
         const updatedEvent = await Event.findByIdAndUpdate(
-            req.params.id,
-            updates,
-            { new: true, runValidators: true }
-        ).select('-__v');
+            req.params.id, 
+            eventData, 
+            { new: true }
+        );
         
         if (!updatedEvent) {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
-            });
+            return res.status(404).json({ message: 'Event not found' });
         }
         
-        res.json({
-            success: true,
-            event: updatedEvent
-        });
+        res.json(updatedEvent);
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        res.status(400).json({ message: error.message });
     }
 });
 
@@ -198,56 +137,36 @@ router.delete('/:id', async (req, res) => {
         const deletedEvent = await Event.findByIdAndDelete(req.params.id);
         
         if (!deletedEvent) {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
-            });
+            return res.status(404).json({ message: 'Event not found' });
         }
         
-        res.json({
-            success: true,
-            message: 'Event deleted successfully'
-        });
+        res.json({ message: 'Event deleted successfully' });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to delete event'
-        });
+        res.status(500).json({ message: error.message });
     }
 });
 
-// Register for event
+// Register for event (increment attendee count)
 router.post('/:id/register', async (req, res) => {
     try {
         const event = await Event.findById(req.params.id);
         
         if (!event) {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
-            });
+            return res.status(404).json({ message: 'Event not found' });
         }
         
+        // Check if maximum attendees limit is reached
         if (event.maxAttendees && event.registeredAttendees >= event.maxAttendees) {
-            return res.status(400).json({
-                success: false,
-                message: 'Event is fully booked'
-            });
+            return res.status(400).json({ message: 'Event is fully booked' });
         }
         
+        // Increment the registeredAttendees count
         event.registeredAttendees += 1;
         await event.save();
         
-        res.json({
-            success: true,
-            registeredAttendees: event.registeredAttendees,
-            maxAttendees: event.maxAttendees
-        });
+        res.json(event);
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to register for event'
-        });
+        res.status(500).json({ message: error.message });
     }
 });
 
