@@ -19,7 +19,7 @@ const serviceVideoRoutes = require('./routes/serviceVideoRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ================== ENHANCED SECURITY ==================
+// ================== SECURITY MIDDLEWARE ==================
 app.use(helmet());
 
 // Rate limiting
@@ -29,7 +29,7 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// ================== FIXED CORS CONFIGURATION ==================
+// ================== CORS CONFIGURATION ==================
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
@@ -41,7 +41,7 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin in development
     if (!origin && process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
@@ -54,17 +54,23 @@ const corsOptions = {
     callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 204
 };
 
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Handle preflight requests for ALL routes
-app.options('*', cors(corsOptions));
-// ========================================================
+// ================== PREFLIGHT HANDLER ==================
+// Global OPTIONS handler - MUST come before routes
+app.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || allowedOrigins[0]);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.status(204).end();
+});
 
 // ================== MIDDLEWARE ==================
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -83,7 +89,7 @@ const dirs = [
   '../uploads/service-videos'
 ];
 
-// Create upload directories if they don't exist
+// Create upload directories
 dirs.forEach(dir => {
   const fullPath = path.join(__dirname, dir);
   if (!fs.existsSync(fullPath)) {
@@ -119,7 +125,7 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only images (JPEG, PNG, GIF) and videos (MP4, MPEG) are allowed.'), false);
+    cb(new Error('Invalid file type'), false);
   }
 };
 
@@ -127,7 +133,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB limit
+    fileSize: 50 * 1024 * 1024 // 50MB
   }
 });
 
@@ -151,7 +157,6 @@ app.get('/api/health', (req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   
-  // Handle multer errors specifically
   if (err instanceof multer.MulterError) {
     return res.status(400).json({
       message: 'File upload error',
@@ -159,7 +164,6 @@ app.use((err, req, res, next) => {
     });
   }
   
-  // Handle CORS errors
   if (err.message === 'Not allowed by CORS') {
     return res.status(403).json({
       message: 'CORS policy violation',
@@ -167,7 +171,6 @@ app.use((err, req, res, next) => {
     });
   }
   
-  // Generic error handler
   res.status(500).json({
     message: 'Internal server error',
     error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
@@ -179,17 +182,16 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Endpoint not found' });
 });
 
-// Database Connection
+// ================== DATABASE & SERVER START ==================
 connectDB()
   .then(() => {
-    // Start Server only after DB connection
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`Allowed CORS origins: ${allowedOrigins.join(', ')}`);
+      console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
     });
   })
   .catch(err => {
-    console.error('Failed to connect to MongoDB:', err);
+    console.error('Database connection failed:', err);
     process.exit(1);
   });
