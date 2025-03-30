@@ -7,7 +7,7 @@ const menuRoutes = require('./routes/menuRoutes');
 const mediaRoutes = require('./routes/mediaRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const blogRoutes = require('./routes/blogRoutes');
-const serviceVideoRoutes = require('./routes/serviceVideoRoutes'); // Import service video routes
+const serviceVideoRoutes = require('./routes/serviceVideoRoutes');
 
 const multer = require('multer');
 const fs = require('fs');
@@ -33,7 +33,7 @@ const dirs = [
     '../uploads/videos',
     '../uploads/images/events',
     '../uploads/images/blogs',
-    '../uploads/service-videos' // Add directory for service videos
+    '../uploads/service-videos'
 ];
 
 dirs.forEach(dir => {
@@ -84,7 +84,7 @@ app.use('/api/menu', menuRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/blogs', blogRoutes);
-app.use('/api/service-videos', serviceVideoRoutes); // Add service video routes
+app.use('/api/service-videos', serviceVideoRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -214,6 +214,19 @@
             margin-bottom: 5px;
         }
 
+        /* Styling for image placeholder fallback */
+        .placeholder-image {
+            background: linear-gradient(45deg, #f3f3f3 25%, #e6e6e6 25%, #e6e6e6 50%, #f3f3f3 50%, #f3f3f3 75%, #e6e6e6 75%, #e6e6e6 100%);
+            background-size: 20px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 16px;
+            text-align: center;
+            padding: 20px;
+        }
+
         @media (max-width: 768px) {
             #images-container, 
             #videos-container {
@@ -250,12 +263,12 @@
 <body>
     <div class="container">
         <header>
-            <h1>Culinary Gallery</h1>
+            <h1>vignesh Catering service / gallery</h1>
             <nav>
-                <a href="index.html">Menu</a>
-                <a href="gallery.html">Gallery</a>
-                <a href="event.html">Event</a>
-                <a href="serviceVideos.html">video</a>
+                <a href="adminvignesh.html">Menu</a>
+                <a href="admingallery.html">Gallery</a>
+                <a href="adminserviceVideos.html">Service</a>
+                <a href="adminevent.html">Events</a>
             </nav>
         </header>
 
@@ -282,89 +295,156 @@
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const mediaUploadForm = document.getElementById('media-upload-form');
-        const imagesContainer = document.getElementById('images-container');
-        const videosContainer = document.getElementById('videos-container');
+  document.addEventListener('DOMContentLoaded', () => {
+    const mediaUploadForm = document.getElementById('media-upload-form');
+    const imagesContainer = document.getElementById('images-container');
+    const videosContainer = document.getElementById('videos-container');
+    
+    // Base URL for the deployed backend
+    const API_BASE_URL = 'https://catering-backend-pewm.onrender.com';
 
-        // Fetch and display media
-        async function fetchMedia() {
-            try {
-                const response = await fetch('http://localhost:3000/api/media');
-                const mediaList = await response.json();
+    // Create custom placeholder element instead of using via.placeholder.com
+    function createPlaceholderElement(title) {
+        const placeholderDiv = document.createElement('div');
+        placeholderDiv.className = 'placeholder-image';
+        placeholderDiv.style.width = '100%';
+        placeholderDiv.style.height = '300px';
+        placeholderDiv.innerHTML = `<span>Image Not Found: ${title || 'Untitled'}</span>`;
+        return placeholderDiv;
+    }
 
-                // Clear existing containers
-                imagesContainer.innerHTML = '';
-                videosContainer.innerHTML = '';
-
-                mediaList.forEach((media, index) => {
-                    const mediaElement = document.createElement('div');
-                    mediaElement.classList.add('media-item');
-                    mediaElement.style.animationDelay = `${index * 0.1}s`;
-
-                    if (media.type === 'image') {
-                        mediaElement.innerHTML = `
-                            <img src="http://localhost:3000/uploads/images/${media.filename}" alt="${media.title}">
-                            <div class="media-info">
-                                <h3>${media.title || 'Untitled Image'}</h3>
-                                <p>${media.description || ''}</p>
-                            </div>
-                        `;
-                        imagesContainer.appendChild(mediaElement);
-                    } else if (media.type === 'video') {
-                        mediaElement.innerHTML = `
-                            <video controls>
-                                <source src="http://localhost:3000/uploads/videos/${media.filename}" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                            <div class="media-info">
-                                <h3>${media.title || 'Untitled Video'}</h3>
-                                <p>${media.description || ''}</p>
-                            </div>
-                        `;
-                        videosContainer.appendChild(mediaElement);
-                    }
-                });
-            } catch (error) {
-                console.error('Error fetching media:', error);
+    // Fetch and display media
+    async function fetchMedia() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/media`);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`);
             }
+            
+            const mediaList = await response.json();
+
+            // Clear existing containers
+            imagesContainer.innerHTML = '';
+            videosContainer.innerHTML = '';
+
+            mediaList.forEach((media, index) => {
+                const mediaElement = document.createElement('div');
+                mediaElement.classList.add('media-item');
+                mediaElement.style.animationDelay = `${index * 0.1}s`;
+
+                if (media.type === 'image') {
+                    // Create image container
+                    const imgContainer = document.createElement('div');
+                    imgContainer.style.width = '100%';
+                    imgContainer.style.height = '300px';
+                    imgContainer.style.overflow = 'hidden';
+                    
+                    // Create image element
+                    const img = document.createElement('img');
+                    img.alt = media.title || 'Image';
+                    img.src = `${API_BASE_URL}/uploads/images/${media.filename}`;
+                    
+                    // Handle image loading error
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        imgContainer.appendChild(createPlaceholderElement(media.title));
+                    };
+                    
+                    imgContainer.appendChild(img);
+                    mediaElement.appendChild(imgContainer);
+                    
+                    // Add media info
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'media-info';
+                    infoDiv.innerHTML = `
+                        <h3>${media.title || 'Untitled Image'}</h3>
+                        <p>${media.description || ''}</p>
+                    `;
+                    mediaElement.appendChild(infoDiv);
+                    
+                    imagesContainer.appendChild(mediaElement);
+                } else if (media.type === 'video') {
+                    mediaElement.innerHTML = `
+                        <video controls>
+                            <source src="${API_BASE_URL}/uploads/videos/${media.filename}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="media-info">
+                            <h3>${media.title || 'Untitled Video'}</h3>
+                            <p>${media.description || ''}</p>
+                        </div>
+                    `;
+                    
+                    // Add error handling for video
+                    const videoElement = mediaElement.querySelector('video');
+                    videoElement.onerror = function() {
+                        this.style.display = 'none';
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'placeholder-image';
+                        errorMsg.innerHTML = '<span>Video could not be loaded</span>';
+                        this.parentNode.insertBefore(errorMsg, this.nextSibling);
+                    };
+                    
+                    videosContainer.appendChild(mediaElement);
+                }
+            });
+            
+            // Show message if no media found
+            if (mediaList.length === 0) {
+                imagesContainer.innerHTML = '<p>No images found. Upload some images to get started!</p>';
+                videosContainer.innerHTML = '<p>No videos found. Upload some videos to get started!</p>';
+            }
+        } catch (error) {
+            console.error('Error fetching media:', error);
+            imagesContainer.innerHTML = '<p class="error">Failed to load images. Please try again later.</p>';
+            videosContainer.innerHTML = '<p class="error">Failed to load videos. Please try again later.</p>';
+        }
+    }
+
+    // Upload media
+    mediaUploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const mediaType = document.getElementById('media-type').value;
+        const mediaFile = document.getElementById('media-file').files[0];
+        const mediaTitle = document.getElementById('media-title').value;
+        const mediaDescription = document.getElementById('media-description').value;
+
+        if (!mediaFile) {
+            alert('Please select a file to upload');
+            return;
         }
 
-        // Upload media
-        mediaUploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const mediaType = document.getElementById('media-type').value;
-            const mediaFile = document.getElementById('media-file').files[0];
-            const mediaTitle = document.getElementById('media-title').value;
-            const mediaDescription = document.getElementById('media-description').value;
+        const formData = new FormData();
+        formData.append('media', mediaFile);
+        formData.append('type', mediaType);
+        formData.append('title', mediaTitle);
+        formData.append('description', mediaDescription);
 
-            const formData = new FormData();
-            formData.append('media', mediaFile);
-            formData.append('type', mediaType);
-            formData.append('title', mediaTitle);
-            formData.append('description', mediaDescription);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/media/upload`, {
+                method: 'POST',
+                body: formData
+            });
 
-            try {
-                const response = await fetch('http://localhost:3000/api/media/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    fetchMedia(); // Refresh media list
-                    mediaUploadForm.reset(); // Clear form
-                } else {
-                    const errorData = await response.json();
-                    console.error('Upload error:', errorData);
-                }
-            } catch (error) {
-                console.error('Error uploading media:', error);
+            if (response.ok) {
+                alert('Media uploaded successfully!');
+                fetchMedia(); // Refresh media list
+                mediaUploadForm.reset(); // Clear form
+            } else {
+                const errorData = await response.json();
+                alert(`Upload failed: ${errorData.message || 'Unknown error'}`);
+                console.error('Upload error:', errorData);
             }
-        });
-
-        // Initial fetch of media
-        fetchMedia();
+        } catch (error) {
+            alert('Error uploading media. Please try again.');
+            console.error('Error uploading media:', error);
+        }
     });
+
+    // Initial fetch of media
+    fetchMedia();
+});
     </script>
 </body>
 </html>

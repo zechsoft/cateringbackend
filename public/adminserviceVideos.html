@@ -304,11 +304,12 @@
     <body>
         <div class="container">
             <header>
-                <h1>Service Videos</h1>
+                <h1>vignesh Catering service / service</h1>
                 <nav>
-                    <a href="index.html">Menu</a>
-                    <a href="gallery.html">Gallery</a>
-                    <a href="service-videos.html">Service Videos</a>
+                    <a href="adminvignesh.html">Menu</a>
+                    <a href="admingallery.html">Gallery</a>
+                    <a href="adminserviceVideos.html">Service</a>
+                    <a href="adminevent.html">Events</a>
                 </nav>
             </header>
 
@@ -353,164 +354,172 @@
         </div>
 
         <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const videoUploadForm = document.getElementById('video-upload-form');
-            const featuredVideosContainer = document.getElementById('featured-videos-container');
-            const videoGalleryContainer = document.getElementById('video-gallery-container');
-            const serviceFilters = document.querySelectorAll('.service-filter');
+   document.addEventListener('DOMContentLoaded', () => {
+    // Update this to your deployed backend URL
+    const API_BASE_URL = 'https://catering-backend-pewm.onrender.com/api';
+    
+    const videoUploadForm = document.getElementById('video-upload-form');
+    const featuredVideosContainer = document.getElementById('featured-videos-container');
+    const videoGalleryContainer = document.getElementById('video-gallery-container');
+    const serviceFilters = document.querySelectorAll('.service-filter');
+    
+    let currentService = 'all';
+
+    // Fetch and display videos
+    async function fetchVideos() {
+        try {
+            // Fetch featured videos
+            const featuredResponse = await fetch(`${API_BASE_URL}/service-videos/featured`);
+            const featuredVideos = await featuredResponse.json();
             
-            let currentService = 'all';
+            // Fetch all or filtered videos
+            const videosUrl = currentService === 'all' 
+                ? `${API_BASE_URL}/service-videos`
+                : `${API_BASE_URL}/service-videos/service/${currentService}`;
+            
+            const videosResponse = await fetch(videosUrl);
+            const allVideos = await videosResponse.json();
 
-            // Fetch and display videos
-            async function fetchVideos() {
-                try {
-                    // Fetch featured videos
-                    const featuredResponse = await fetch('http://localhost:3000/api/service-videos/featured');
-                    const featuredVideos = await featuredResponse.json();
-                    
-                    // Fetch all or filtered videos
-                    const videosUrl = currentService === 'all' 
-                        ? 'http://localhost:3000/api/service-videos'
-                        : `http://localhost:3000/api/service-videos/service/${currentService}`;
-                    
-                    const videosResponse = await fetch(videosUrl);
-                    const allVideos = await videosResponse.json();
+            // Clear existing containers
+            featuredVideosContainer.innerHTML = '';
+            videoGalleryContainer.innerHTML = '';
 
-                    // Clear existing containers
-                    featuredVideosContainer.innerHTML = '';
-                    videoGalleryContainer.innerHTML = '';
-
-                    // Display featured videos
-                    if (featuredVideos.length === 0) {
-                        featuredVideosContainer.innerHTML = '<p>No featured videos available.</p>';
-                    } else {
-                        featuredVideos.forEach((video, index) => {
-                            createVideoElement(video, featuredVideosContainer, index);
-                        });
-                    }
-
-                    // Display all videos
-                    if (allVideos.length === 0) {
-                        videoGalleryContainer.innerHTML = '<p>No videos available for this service.</p>';
-                    } else {
-                        allVideos.forEach((video, index) => {
-                            createVideoElement(video, videoGalleryContainer, index);
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error fetching videos:', error);
-                }
-            }
-
-            // Create video element
-            function createVideoElement(video, container, index) {
-                const videoElement = document.createElement('div');
-                videoElement.classList.add('video-item');
-                videoElement.style.animationDelay = `${index * 0.1}s`;
-
-                videoElement.innerHTML = `
-                    <video controls>
-                        <source src="http://localhost:3000/uploads/service-videos/${video.filename}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <span class="service-tag">${video.service}</span>
-                    ${video.featured ? '<span class="featured-badge">Featured</span>' : ''}
-                    <div class="video-info">
-                        <h3>${video.title || 'Untitled Video'}</h3>
-                        <p>${video.description || ''}</p>
-                        <div class="video-controls">
-                            <button class="edit-video" data-id="${video._id}">Edit</button>
-                            <button class="delete-video" data-id="${video._id}">Delete</button>
-                        </div>
-                    </div>
-                `;
-
-                container.appendChild(videoElement);
-
-                // Add event listeners to buttons
-                videoElement.querySelector('.edit-video').addEventListener('click', () => handleEditVideo(video));
-                videoElement.querySelector('.delete-video').addEventListener('click', () => handleDeleteVideo(video._id));
-            }
-
-            // Handle video editing
-            function handleEditVideo(video) {
-                // Implement edit functionality
-                // Could open a modal or form pre-filled with video details
-                console.log('Edit video:', video);
-                alert('Edit functionality would go here');
-            }
-
-            // Handle video deletion
-            async function handleDeleteVideo(videoId) {
-                if (confirm('Are you sure you want to delete this video?')) {
-                    try {
-                        const response = await fetch(`http://localhost:3000/api/service-videos/${videoId}`, {
-                            method: 'DELETE'
-                        });
-
-                        if (response.ok) {
-                            // Refresh videos after deletion
-                            fetchVideos();
-                        } else {
-                            const errorData = await response.json();
-                            console.error('Delete error:', errorData);
-                        }
-                    } catch (error) {
-                        console.error('Error deleting video:', error);
-                    }
-                }
-            }
-
-            // Upload video
-            videoUploadForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const formData = new FormData(videoUploadForm);
-                
-                // Handle checkbox properly
-                const featuredCheckbox = document.getElementById('featured');
-                formData.set('featured', featuredCheckbox.checked);
-
-                try {
-                    const response = await fetch('http://localhost:3000/api/service-videos/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        fetchVideos(); // Refresh video list
-                        videoUploadForm.reset(); // Clear form
-                        alert('Video uploaded successfully!');
-                    } else {
-                        const errorData = await response.json();
-                        alert(`Upload error: ${errorData.message}`);
-                    }
-                } catch (error) {
-                    console.error('Error uploading video:', error);
-                    alert('Failed to upload video. Please try again.');
-                }
-            });
-
-            // Service filter functionality
-            serviceFilters.forEach(filter => {
-                filter.addEventListener('click', () => {
-                    // Remove active class from all filters
-                    serviceFilters.forEach(btn => btn.classList.remove('active'));
-                    
-                    // Add active class to clicked filter
-                    filter.classList.add('active');
-                    
-                    // Update current service filter
-                    currentService = filter.dataset.service;
-                    
-                    // Fetch videos with new filter
-                    fetchVideos();
+            // Display featured videos
+            if (featuredVideos.length === 0) {
+                featuredVideosContainer.innerHTML = '<p>No featured videos available.</p>';
+            } else {
+                featuredVideos.forEach((video, index) => {
+                    createVideoElement(video, featuredVideosContainer, index);
                 });
+            }
+
+            // Display all videos
+            if (allVideos.length === 0) {
+                videoGalleryContainer.innerHTML = '<p>No videos available for this service.</p>';
+            } else {
+                allVideos.forEach((video, index) => {
+                    createVideoElement(video, videoGalleryContainer, index);
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching videos:', error);
+            // Display user-friendly error message
+            featuredVideosContainer.innerHTML = '<p>Unable to load featured videos. Please try again later.</p>';
+            videoGalleryContainer.innerHTML = '<p>Unable to load videos. Please try again later.</p>';
+        }
+    }
+
+    // Create video element
+    function createVideoElement(video, container, index) {
+        const videoElement = document.createElement('div');
+        videoElement.classList.add('video-item');
+        videoElement.style.animationDelay = `${index * 0.1}s`;
+
+        videoElement.innerHTML = `
+            <video controls>
+                <source src="${API_BASE_URL}/uploads/service-videos/${video.filename}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <span class="service-tag">${video.service}</span>
+            ${video.featured ? '<span class="featured-badge">Featured</span>' : ''}
+            <div class="video-info">
+                <h3>${video.title || 'Untitled Video'}</h3>
+                <p>${video.description || ''}</p>
+                <div class="video-controls">
+                    <button class="edit-video" data-id="${video._id}">Edit</button>
+                    <button class="delete-video" data-id="${video._id}">Delete</button>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(videoElement);
+
+        // Add event listeners to buttons
+        videoElement.querySelector('.edit-video').addEventListener('click', () => handleEditVideo(video));
+        videoElement.querySelector('.delete-video').addEventListener('click', () => handleDeleteVideo(video._id));
+    }
+
+    // Handle video editing
+    function handleEditVideo(video) {
+        // Implement edit functionality
+        // Could open a modal or form pre-filled with video details
+        console.log('Edit video:', video);
+        alert('Edit functionality would go here');
+    }
+
+    // Handle video deletion
+    async function handleDeleteVideo(videoId) {
+        if (confirm('Are you sure you want to delete this video?')) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/service-videos/${videoId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Refresh videos after deletion
+                    fetchVideos();
+                } else {
+                    const errorData = await response.json();
+                    console.error('Delete error:', errorData);
+                    alert('Failed to delete video. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error deleting video:', error);
+                alert('Failed to delete video. Please try again.');
+            }
+        }
+    }
+
+    // Upload video
+    videoUploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(videoUploadForm);
+        
+        // Handle checkbox properly
+        const featuredCheckbox = document.getElementById('featured');
+        formData.set('featured', featuredCheckbox.checked);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/service-videos/upload`, {
+                method: 'POST',
+                body: formData
             });
 
-            // Initial fetch of videos
+            if (response.ok) {
+                fetchVideos(); // Refresh video list
+                videoUploadForm.reset(); // Clear form
+                alert('Video uploaded successfully!');
+            } else {
+                const errorData = await response.json();
+                alert(`Upload error: ${errorData.message || 'Failed to upload video'}`);
+            }
+        } catch (error) {
+            console.error('Error uploading video:', error);
+            alert('Failed to upload video. Please try again.');
+        }
+    });
+
+    // Service filter functionality
+    serviceFilters.forEach(filter => {
+        filter.addEventListener('click', () => {
+            // Remove active class from all filters
+            serviceFilters.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked filter
+            filter.classList.add('active');
+            
+            // Update current service filter
+            currentService = filter.dataset.service;
+            
+            // Fetch videos with new filter
             fetchVideos();
         });
+    });
+
+    // Initial fetch of videos
+    fetchVideos();
+});
         </script>
     </body>
     </html>
