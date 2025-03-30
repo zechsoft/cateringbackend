@@ -18,7 +18,6 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors({
     origin: '*', // Be more specific in production
-    
     methods: ['GET', 'POST', 'PUT', 'DELETE']
 }));
 app.use(bodyParser.json());
