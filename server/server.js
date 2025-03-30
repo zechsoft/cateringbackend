@@ -29,33 +29,42 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// ================== IMPROVED CORS CONFIG ==================
+// ================== FIXED CORS CONFIGURATION ==================
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:5500',
   'http://127.0.0.1:5500',
-   'file://',
-  'https://your-production-domain.com',
-  'https://www.your-production-domain.com'
+  'https://catering-backend-6dyl.onrender.com',
+  'https://your-production-domain.com'
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin && process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
     
     if (allowedOrigins.includes(origin) || 
-        origin.includes('localhost') || 
-        origin.includes('127.0.0.1')) {
+        origin?.includes('localhost') || 
+        origin?.includes('127.0.0.1')) {
       return callback(null, true);
     }
     callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true
-}));
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests for ALL routes
+app.options('*', cors(corsOptions));
+// ========================================================
 
 // ================== MIDDLEWARE ==================
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -86,8 +95,10 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let uploadPath;
     
-    if (req.path.includes('/blogs')) {
+    if (req.baseUrl.includes('/blogs')) {
       uploadPath = path.join(__dirname, '../uploads/images/blogs');
+    } else if (req.baseUrl.includes('/service-videos')) {
+      uploadPath = path.join(__dirname, '../uploads/service-videos');
     } else {
       const isImage = file.mimetype.startsWith('image');
       uploadPath = isImage 
@@ -168,9 +179,17 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Endpoint not found' });
 });
 
-// ================== SERVER START ==================
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Allowed CORS origins: ${allowedOrigins.join(', ')}`);
-});
+// Database Connection
+connectDB()
+  .then(() => {
+    // Start Server only after DB connection
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`Allowed CORS origins: ${allowedOrigins.join(', ')}`);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to connect to MongoDB:', err);
+    process.exit(1);
+  });
