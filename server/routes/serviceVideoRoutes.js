@@ -2,91 +2,42 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const mongoose = require('mongoose');
 
-// Enhanced ServiceVideo Schema
+// Define ServiceVideo Schema
 const serviceVideoSchema = new mongoose.Schema({
-    title: { 
-        type: String, 
-        required: [true, 'Title is required'],
-        trim: true,
-        maxlength: [100, 'Title cannot exceed 100 characters']
-    },
-    filename: { 
-        type: String, 
-        required: true,
-        unique: true
-    },
-    path: {
-        type: String,
-        required: true
-    },
-    description: { 
-        type: String,
-        trim: true,
-        maxlength: [500, 'Description cannot exceed 500 characters']
-    },
-    service: { 
-        type: String, 
-        required: [true, 'Service type is required'],
-        enum: ['catering', 'events', 'cooking', 'other']
-    },
-    featured: { 
-        type: Boolean, 
-        default: false 
-    },
-    duration: {
-        type: Number // in seconds
-    },
-    size: {
-        type: Number // in bytes
-    },
-    mimetype: {
-        type: String
-    },
-    uploadDate: { 
-        type: Date, 
-        default: Date.now 
-    }
-}, {
-    timestamps: true // Adds createdAt and updatedAt
+    title: { type: String, required: true },
+    filename: { type: String, required: true },
+    description: { type: String },
+    service: { type: String, required: true }, // e.g., "catering", "events", "cooking"
+    featured: { type: Boolean, default: false },
+    uploadDate: { type: Date, default: Date.now }
 });
 
 const ServiceVideo = mongoose.model('ServiceVideo', serviceVideoSchema);
 
-// Configure storage with absolute paths for Render
+// Multer storage configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../uploads/service-videos');
-        fs.mkdirSync(uploadPath, { recursive: true }); // Ensure directory exists
-        cb(null, uploadPath);
+        cb(null, path.join(__dirname, '../../uploads/service-videos'));
     },
     filename: (req, file, cb) => {
-        const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.]/g, '-');
-        cb(null, `${Date.now()}-${sanitizedName}`);
+        cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '-'));
     }
 });
 
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        const allowedTypes = [
-            'video/mp4', 
-            'video/mpeg', 
-            'video/webm', 
-            'video/quicktime',
-            'video/x-msvideo' // avi
-        ];
-        
+        const allowedTypes = ['video/mp4', 'video/mpeg', 'video/webm', 'video/quicktime'];
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error(`Invalid file type. Only ${allowedTypes.join(', ')} are allowed.`));
+            cb(new Error('Invalid file type. Only video files are allowed.'));
         }
     },
     limits: {
-        fileSize: 100 * 1024 * 1024 // 100MB
+        fileSize: 100 * 1024 * 1024 // 100MB max file size
     }
 });
 
@@ -95,108 +46,56 @@ router.post('/upload', upload.single('video'), async (req, res) => {
     try {
         // Validate request
         if (!req.file) {
-            return res.status(400).json({ 
-                success: false,
-                message: 'No video file uploaded' 
-            });
+            return res.status(400).json({ message: 'No video file uploaded' });
         }
 
         if (!req.body.title || !req.body.service) {
-            // Clean up uploaded file if validation fails
-            fs.unlink(req.file.path, () => {});
-            return res.status(400).json({ 
-                success: false,
-                message: 'Title and service fields are required' 
-            });
+            return res.status(400).json({ message: 'Title and service fields are required' });
         }
 
         // Create new service video entry
         const serviceVideo = new ServiceVideo({
             title: req.body.title,
             filename: req.file.filename,
-            path: req.file.path,
             description: req.body.description || '',
             service: req.body.service,
-            featured: req.body.featured === 'true',
-            size: req.file.size,
-            mimetype: req.file.mimetype
-            // Note: You might want to add duration extraction using a library like ffprobe
+            featured: req.body.featured === 'true'
         });
 
         const savedVideo = await serviceVideo.save();
-        
-        res.status(201).json({
-            success: true,
-            message: 'Video uploaded successfully',
-            video: savedVideo
-        });
+        res.status(201).json(savedVideo);
     } catch (error) {
-        // Clean up uploaded file if error occurs
-        if (req.file) {
-            fs.unlink(req.file.path, () => {});
-        }
-        
-        res.status(400).json({ 
-            success: false,
-            message: 'Failed to upload video',
-            error: error.message 
-        });
+        res.status(400).json({ message: error.message });
     }
 });
 
-// Get all service videos with filtering
+// Get all service videos
 router.get('/', async (req, res) => {
     try {
-        const { service, featured, limit } = req.query;
-        const filter = {};
-        
-        if (service) filter.service = service;
-        if (featured) filter.featured = featured === 'true';
-        
-        const queryLimit = parseInt(limit) || 20;
-        
-        const videos = await ServiceVideo.find(filter)
-            .sort({ createdAt: -1 })
-            .limit(queryLimit)
-            .select('-__v -path'); // Exclude sensitive/irrelevant fields
-            
-        res.json({
-            success: true,
-            count: videos.length,
-            videos
-        });
+        const videos = await ServiceVideo.find().sort({ uploadDate: -1 });
+        res.json(videos);
     } catch (error) {
-        res.status(500).json({ 
-            success: false,
-            message: 'Failed to retrieve videos',
-            error: error.message 
-        });
+        res.status(500).json({ message: error.message });
     }
 });
 
-// Get video by ID
-router.get('/:id', async (req, res) => {
+// Get videos by service type
+router.get('/service/:serviceType', async (req, res) => {
     try {
-        const video = await ServiceVideo.findById(req.params.id)
-            .select('-__v -path');
-            
-        if (!video) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Video not found' 
-            });
-        }
-        
-        res.json({
-            success: true,
-            video
-        });
+        const videos = await ServiceVideo.find({ service: req.params.serviceType }).sort({ uploadDate: -1 });
+        res.json(videos);
     } catch (error) {
-        res.status(500).json({ 
-            success: false,
-            message: 'Failed to retrieve video',
-            error: error.message 
-        });
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get featured videos
+router.get('/featured', async (req, res) => {
+    try {
+        const videos = await ServiceVideo.find({ featured: true }).sort({ uploadDate: -1 });
+        res.json(videos);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -213,40 +112,19 @@ router.put('/:id', async (req, res) => {
         // Remove undefined fields
         Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key]);
         
-        if (Object.keys(updates).length === 0) {
-            return res.status(400).json({ 
-                success: false,
-                message: 'No valid fields to update' 
-            });
-        }
-        
         const updatedVideo = await ServiceVideo.findByIdAndUpdate(
             req.params.id, 
             updates,
-            { 
-                new: true,
-                runValidators: true
-            }
-        ).select('-__v -path');
+            { new: true }
+        );
         
         if (!updatedVideo) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Video not found' 
-            });
+            return res.status(404).json({ message: 'Video not found' });
         }
         
-        res.json({
-            success: true,
-            message: 'Video updated successfully',
-            video: updatedVideo
-        });
+        res.json(updatedVideo);
     } catch (error) {
-        res.status(400).json({ 
-            success: false,
-            message: 'Failed to update video',
-            error: error.message 
-        });
+        res.status(400).json({ message: error.message });
     }
 });
 
@@ -256,31 +134,14 @@ router.delete('/:id', async (req, res) => {
         const video = await ServiceVideo.findByIdAndDelete(req.params.id);
         
         if (!video) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Video not found' 
-            });
+            return res.status(404).json({ message: 'Video not found' });
         }
         
-        // Delete the associated file
-        fs.unlink(video.path, (err) => {
-            if (err) console.error('Error deleting video file:', err);
-        });
+        // Note: You may want to add file system cleanup here to delete the actual file
         
-        res.json({ 
-            success: true,
-            message: 'Video deleted successfully',
-            deletedVideo: {
-                id: video._id,
-                title: video.title
-            }
-        });
+        res.json({ message: 'Video deleted successfully' });
     } catch (error) {
-        res.status(500).json({ 
-            success: false,
-            message: 'Failed to delete video',
-            error: error.message 
-        });
+        res.status(500).json({ message: error.message });
     }
 });
 
