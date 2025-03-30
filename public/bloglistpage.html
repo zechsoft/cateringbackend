@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Culinary Blog | Our Catering Insights</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --background-color: #f7fff7;
+            --text-color: #2c3e50;
+            --white: #ffffff;
+            --shadow-subtle: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-elevated: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--white);
+            text-align: center;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow-elevated);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(-45deg);
+            z-index: 1;
+            animation: shine 5s infinite linear;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: rotate(-45deg) translateX(-100%);
+            }
+            100% {
+                transform: rotate(-45deg) translateX(100%);
+            }
+        }
+
+        header h1 {
+            position: relative;
+            z-index: 2;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        nav a {
+            color: var(--white);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        nav a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            z-index: -1;
+        }
+
+        nav a:hover::before {
+            left: 0;
+        }
+
+        .blogs-section {
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: var(--shadow-elevated);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .blog-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 30px;
+            border: 2px solid var(--secondary-color);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-container input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255,107,107,0.2);
+        }
+
+        .search-container button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .tags-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tag-button {
+            background: transparent;
+            border: 2px solid var(--secondary-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-color);
+        }
+
+        .tag-button:hover,
+        .tag-button.active {
+            background: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .blogs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .blog-card {
+            background: var(--white);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow-subtle);
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .blog-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .blog-image {
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .blog-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .blog-card:hover .blog-image img {
+            transform: scale(1.1);
+        }
+
+        .placeholder-image {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #95a5a6;
+            font-style: italic;
+        }
+
+        .blog-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .blog-content h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .blog-meta {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+
+        .blog-excerpt {
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .read-more {
+            align-self: flex-start;
+            text-decoration: none;
+            color: var(--secondary-color);
+            font-weight: 600;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .read-more::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--secondary-color);
+            transition: width 0.3s ease;
+        }
+
+        .read-more:hover::after {
+            width: 100%;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .pagination button {
+            background: var(--white);
+            border: 2px solid var(--secondary-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button.active {
+            background: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .pagination button:hover:not(.active) {
+            background: rgba(78, 205, 196, 0.1);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .no-items, .error {
+            text-align: center;
+            padding: 40px;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+
+        .error {
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .blogs-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .blog-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Culinary Blog</h1>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="gallery.html">Gallery</a>
+                <a href="events.html">Events</a>
+                <a href="blogs.html" class="active">Blog</a>
+            </nav>
+        </header>
+
+        <section class="blogs-section">
+            <h2>Latest Articles</h2>
+            <div class="blog-filters">
+                <div class="search-container">
+                    <input type="text" id="blog-search" placeholder="Search blogs...">
+                    <button id="search-button"><i class="fas fa-search"></i></button>
+                </div>
+                <div class="tags-filter" id="tags-container">
+                    <!-- Tags will be populated dynamically -->
+                </div>
+            </div>
+            <div class="blogs-grid" id="blogs-container">
+                <!-- Blog posts will be loaded here -->
+                <div class="loading-indicator">Loading...</div>
+            </div>
+            <div class="pagination" id="pagination-container">
+                <!-- Pagination will be added here -->
+            </div>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // State variables
+            let currentPage = 1;
+            let currentTag = '';
+            let currentSearch = '';
+            const limit = 6; // Number of blogs per page
+
+            // Elements
+            const blogsContainer = document.getElementById('blogs-container');
+            const paginationContainer = document.getElementById('pagination-container');
+            const tagsContainer = document.getElementById('tags-container');
+            const searchInput = document.getElementById('blog-search');
+            const searchButton = document.getElementById('search-button');
+
+            // Load blogs
+            async function loadBlogs() {
+                try {
+                    blogsContainer.innerHTML = '<div class="loading-indicator">Loading...</div>';
+
+                    // Build the API URL with query parameters
+                    let url = `http://localhost:3000/api/content/blogs?page=${currentPage}&limit=${limit}`;
+                    if (currentTag) url += `&tag=${encodeURIComponent(currentTag)}`;
+                    if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    blogsContainer.innerHTML = '';
+                    
+                    if (data.blogs && data.blogs.length > 0) {
+                        data.blogs.forEach(blog => {
+                            const blogCard = document.createElement('article');
+                            blogCard.className = 'blog-card';
+                            
+                            // Generate the HTML for each blog card
+                            blogCard.innerHTML = `
+                                <div class="blog-image">
+                                    ${blog.imageUrl 
+                                        ? `<img src="${blog.imageUrl}" alt="${blog.title}">`
+                                        : '<div class="placeholder-image">No Image</div>'
+                                    }
+                                </div>
+                                <div class="blog-content">
+                                    <h3>${blog.title}</h3>
+                                    <p class="blog-meta">By ${blog.author} | ${new Date(blog.publishDate).toLocaleDateString()}</p>
+                                    <p class="blog-excerpt">${blog.content.substring(0, 150)}${blog.content.length > 150 ? '...' : ''}</p>
+                                    <a href="blog-detail.html?id=${blog._id}" class="read-more">Read More</a>
+                                </div>
+                            `;
+                            
+                            blogsContainer.appendChild(blogCard);
+                        });
+
+                        // Generate pagination
+                        createPagination(data.totalPages);
+                    } else {
+                        blogsContainer.innerHTML = '<p class="no-items">No blogs available matching your criteria.</p>';
+                        paginationContainer.innerHTML = '';
+                    }
+
+                    // Fetch tags for the filter (only on first load)
+                    if (!tagsContainer.hasChildNodes()) {
+                        fetchTags();
+                    }
+                } catch (error) {
+                    console.error('Error fetching blogs:', error);
+                    blogsContainer.innerHTML = 
+                        '<p class="error">Failed to load blogs. Please try again later.</p>';
+                }
+            }
+
+            // Create pagination buttons
+            function createPagination(totalPages) {
+                paginationContainer.innerHTML = '';
+                
+                // Previous button
+                const prevButton = document.createElement('button');
+                prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                prevButton.disabled = currentPage === 1;
+                prevButton.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        loadBlogs();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+                paginationContainer.appendChild(prevButton);
+                
+                // Page numbers
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    pageButton.className = i === currentPage ? 'active' : '';
+                    pageButton.addEventListener('click', () => {
+                        currentPage = i;
+                        loadBlogs();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                    paginationContainer.appendChild(pageButton);
+                }
+                
+                // Next button
+                const nextButton = document.createElement('button');
+                nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                nextButton.disabled = currentPage === totalPages;
+                nextButton.addEventListener('click', () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        loadBlogs();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+                paginationContainer.appendChild(nextButton);
+            }
+
+            // Fetch all available tags
+            async function fetchTags() {
+                try {
+                    // In a real implementation, you would have an API endpoint to fetch all unique tags
+                    // For now, we'll use a sample set of tags
+                    const sampleTags = ['Recipes', 'Cooking Tips', 'Events', 'Catering', 'Food Trends'];
+                    
+                    // Create "All" tag
+                    const allTagButton = document.createElement('button');
+                    allTagButton.className = 'tag-button' + (!currentTag ? ' active' : '');
+                    allTagButton.textContent = 'All';
+                    allTagButton.addEventListener('click', () => {
+                        currentTag = '';
+                        currentPage = 1;
+                        
+                        // Update active class
+                        document.querySelectorAll('.tag-button').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        allTagButton.classList.add('active');
+                        
+                        loadBlogs();
+                    });
+                    tagsContainer.appendChild(allTagButton);
+                    
+                    // Create tag buttons
+                    sampleTags.forEach(tag => {
+                        const tagButton = document.createElement('button');
+                        tagButton.className = 'tag-button' + (currentTag === tag ? ' active' : '');
+                        tagButton.textContent = tag;
+                        tagButton.addEventListener('click', () => {
+                            currentTag = tag;
+                            currentPage = 1;
+                            
+                            // Update active class
+                            document.querySelectorAll('.tag-button').forEach(btn => {
+                                btn.classList.remove('active');
+                            });
+                            tagButton.classList.add('active');
+                            
+                            loadBlogs();
+                        });
+                        tagsContainer.appendChild(tagButton);
+                    });
+                } catch (error) {
+                    console.error('Error fetching tags:', error);
+                }
+            }
+
+            // Set up search functionality
+            searchButton.addEventListener('click', () => {
+                currentSearch = searchInput.value.trim();
+                currentPage = 1;
+                loadBlogs();
+            });
+
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    currentSearch = searchInput.value.trim();
+                    currentPage = 1;
+                    loadBlogs();
+                }
+            });
+
+            // Initial load
+            loadBlogs();
+        });
+    </script>
+</body>
+</html>

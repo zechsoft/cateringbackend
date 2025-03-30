@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .blog-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .blog-posts {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .blog-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .blog-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .blog-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .blog-content {
+            padding: 15px;
+        }
+        
+        .blog-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .blog-excerpt {
+            color: #666;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .blog-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .blog-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .blog-tag {
+            background-color: #f0f0f0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .blog-details {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .blog-header {
+            margin-bottom: 30px;
+        }
+        
+        .blog-header-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .blog-header-title {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .blog-header-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        .blog-body {
+            line-height: 1.8;
+            color: #333;
+        }
+        
+        .back-button {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 8px 16px;
+            background-color: #f0f0f0;
+            color: #333;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Menu -->
+    <nav class="navbar">
+        <!-- You'll need to include your existing navigation here -->
+    </nav>
+
+    <div class="blog-container">
+        <h1>Our Blog</h1>
+        <div class="blog-posts" id="blogPosts">
+            <!-- Blog posts will be loaded here -->
+        </div>
+
+        <div class="blog-details" id="blogDetails">
+            <a class="back-button" id="backToBlogs">← Back to All Blogs</a>
+            <div class="blog-header">
+                <img class="blog-header-image" id="detailImage" src="" alt="">
+                <h1 class="blog-header-title" id="detailTitle"></h1>
+                <div class="blog-header-meta">
+                    <span id="detailAuthor"></span>
+                    <span id="detailDate"></span>
+                </div>
+                <div class="blog-tags" id="detailTags"></div>
+            </div>
+            <div class="blog-body" id="detailContent"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <!-- You'll need to include your existing footer here -->
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const blogPosts = document.getElementById('blogPosts');
+            const blogDetails = document.getElementById('blogDetails');
+            const backToBlogs = document.getElementById('backToBlogs');
+            
+            // Load all published blog posts
+            fetchBlogs();
+            
+            backToBlogs.addEventListener('click', function() {
+                blogDetails.style.display = 'none';
+                blogPosts.style.display = 'grid';
+                window.scrollTo(0, 0);
+            });
+            
+            function fetchBlogs() {
+                fetch('/api/blogs?published=true')
+                    .then(response => response.json())
+                    .then(blogs => {
+                        if (blogs.length === 0) {
+                            blogPosts.innerHTML = '<p>No blog posts available yet.</p>';
+                            return;
+                        }
+                        
+                        displayBlogs(blogs);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching blogs:', error);
+                        blogPosts.innerHTML = '<p>Failed to load blog posts. Please try again later.</p>';
+                    });
+            }
+            
+            function displayBlogs(blogs) {
+                blogPosts.innerHTML = '';
+                
+                blogs.forEach(blog => {
+                    const postElement = document.createElement('div');
+                    postElement.className = 'blog-card';
+                    
+                    // Create excerpt from content (first 150 characters)
+                    const excerpt = blog.content.replace(/<[^>]*>/g, '').slice(0, 150) + '...';
+                    
+                    // Format date
+                    const date = new Date(blog.createdAt);
+                    const formattedDate = `${date.toLocaleDateString()}`;
+                    
+                    postElement.innerHTML = `
+                        <img class="blog-image" src="${blog.imageUrl || '/images/blog-placeholder.jpg'}" alt="${blog.title}">
+                        <div class="blog-content">
+                            <h2 class="blog-title">${blog.title}</h2>
+                            <p class="blog-excerpt">${excerpt}</p>
+                            <div class="blog-meta">
+                                <span>${blog.author}</span>
+                                <span>${formattedDate}</span>
+                            </div>
+                            <div class="blog-tags">
+                                ${blog.tags.map(tag => `<span class="blog-tag">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                    
+                    postElement.addEventListener('click', () => showBlogDetails(blog));
+                    blogPosts.appendChild(postElement);
+                });
+            }
+            
+            function showBlogDetails(blog) {
+                // Update the detail view with blog content
+                document.getElementById('detailImage').src = blog.imageUrl || '/images/blog-placeholder.jpg';
+                document.getElementById('detailTitle').textContent = blog.title;
+                document.getElementById('detailAuthor').textContent = `By ${blog.author}`;
+                
+                const date = new Date(blog.createdAt);
+                document.getElementById('detailDate').textContent = date.toLocaleDateString();
+                
+                const tagsContainer = document.getElementById('detailTags');
+                tagsContainer.innerHTML = '';
+                blog.tags.forEach(tag => {
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'blog-tag';
+                    tagElement.textContent = tag;
+                    tagsContainer.appendChild(tagElement);
+                });
+                
+                document.getElementById('detailContent').innerHTML = blog.content;
+                
+                // Show the detail view, hide the list view
+                blogPosts.style.display = 'none';
+                blogDetails.style.display = 'block';
+                
+                // Scroll to top of details
+                window.scrollTo(0, 0);
+            }
+        });
+    </script>
+</body>
+</html>
