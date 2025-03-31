@@ -32,19 +32,20 @@
         }
 
         .container {
+            width: 95%;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
         }
 
         header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: var(--white);
             text-align: center;
-            padding: 2rem;
+            padding: 1.5rem 1rem;
             border-radius: 15px;
             box-shadow: var(--shadow-elevated);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             position: relative;
             overflow: hidden;
         }
@@ -74,26 +75,28 @@
         header h1 {
             position: relative;
             z-index: 2;
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         nav {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-top: 15px;
         }
 
         nav a {
             color: var(--white);
             text-decoration: none;
-            padding: 10px 20px;
+            padding: 8px 15px;
             border-radius: 25px;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
             z-index: 2;
+            font-size: 0.9rem;
         }
 
         nav a::before {
@@ -116,29 +119,30 @@
             background: var(--white);
             border-radius: 15px;
             box-shadow: var(--shadow-elevated);
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
             transition: all 0.4s ease;
         }
 
         #event-form-section:hover, #events-section:hover {
-            transform: translateY(-10px);
+            transform: translateY(-5px);
             box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         }
 
         #event-form {
             display: grid;
-            gap: 20px;
+            gap: 15px;
         }
 
         #event-form input, 
         #event-form textarea, 
         #event-form select {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid var(--secondary-color);
             border-radius: 10px;
             transition: all 0.3s ease;
+            font-size: 1rem;
         }
 
         #event-form input:focus, 
@@ -157,18 +161,20 @@
         .form-group label {
             font-weight: 600;
             color: var(--primary-color);
+            font-size: 0.95rem;
         }
 
         button {
             background: var(--primary-color);
             color: var(--white);
             border: none;
-            padding: 12px 25px;
+            padding: 10px 20px;
             border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: 600;
             text-transform: uppercase;
+            font-size: 0.9rem;
         }
 
         button:hover {
@@ -179,8 +185,8 @@
 
         #events-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
         }
 
         .event-card {
@@ -195,13 +201,13 @@
         }
 
         .event-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-5px);
             box-shadow: var(--shadow-elevated);
         }
 
         .event-image {
             position: relative;
-            height: 200px;
+            height: 180px;
             overflow: hidden;
         }
 
@@ -218,40 +224,43 @@
 
         .event-date-badge {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 10px;
+            right: 10px;
             background: var(--event-bg-gradient);
             color: var(--white);
-            padding: 10px;
+            padding: 8px;
             border-radius: 8px;
             font-weight: bold;
             box-shadow: var(--shadow-subtle);
             text-align: center;
+            font-size: 0.9rem;
         }
 
         .event-content {
-            padding: 20px;
+            padding: 15px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
         }
 
         .event-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             margin-bottom: 10px;
             color: var(--primary-color);
         }
 
         .event-meta {
             display: flex;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            gap: 8px;
         }
 
         .event-meta div {
             display: flex;
             align-items: center;
-            margin-right: 15px;
+            margin-right: 10px;
         }
 
         .event-meta i {
@@ -260,9 +269,10 @@
         }
 
         .event-description {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             color: var(--text-color);
             flex-grow: 1;
+            font-size: 0.95rem;
         }
 
         .event-footer {
@@ -270,10 +280,12 @@
             justify-content: space-between;
             align-items: center;
             margin-top: auto;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .event-attendees {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--secondary-color);
         }
 
@@ -285,7 +297,7 @@
             border-radius: 25px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .register-btn:hover {
@@ -303,19 +315,21 @@
         .tab-nav {
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
             margin-bottom: 20px;
         }
 
         .tab-button {
             background: none;
             border: none;
-            padding: 10px 20px;
-            margin: 0 5px;
+            padding: 8px 15px;
             border-radius: 20px;
             cursor: pointer;
             font-weight: 600;
             color: var(--text-color);
             transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
 
         .tab-button.active {
@@ -344,15 +358,173 @@
             opacity: 0;
         }
 
-        /* Responsive */
+        .button-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .edit-btn, .delete-btn {
+            background: var(--white);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .edit-btn:hover {
+            background: var(--secondary-color);
+            color: var(--white);
+            border-color: var(--secondary-color);
+        }
+
+        .delete-btn {
+            color: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        .delete-btn:hover {
+            background: #e74c3c;
+            color: var(--white);
+            border-color: #e74c3c;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .cancel-btn {
+            background: #7f8c8d;
+            color: var(--white);
+        }
+
+        .cancel-btn:hover {
+            background: #95a5a6;
+        }
+        
+        /* Enhanced Mobile Styles */
         @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 10px;
+            }
+            
+            header {
+                padding: 1rem;
+                margin-bottom: 15px;
+            }
+            
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            nav {
+                gap: 5px;
+            }
+            
+            nav a {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+            
+            #event-form-section, #events-section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
             #events-container {
                 grid-template-columns: 1fr;
             }
             
             .event-meta {
                 flex-direction: column;
-                gap: 5px;
+                gap: 3px;
+            }
+            
+            .event-meta div {
+                margin-right: 0;
+            }
+            
+            .event-title {
+                font-size: 1.1rem;
+            }
+            
+            .event-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .button-group {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 10px;
+            }
+            
+            .register-btn, .edit-btn, .delete-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .form-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            button {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+            
+            #event-form input, 
+            #event-form textarea, 
+            #event-form select {
+                padding: 8px;
+                font-size: 0.95rem;
+            }
+        }
+        
+        /* Very small screens */
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .event-image {
+                height: 160px;
+            }
+            
+            .event-date-badge {
+                padding: 6px;
+                font-size: 0.8rem;
+            }
+            
+            .event-content {
+                padding: 12px;
+            }
+            
+            .event-title {
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+            
+            .event-description {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+            
+            .form-group label {
+                font-size: 0.9rem;
+            }
+            
+            .tab-button {
+                padding: 6px 10px;
+                font-size: 0.8rem;
             }
         }
     </style>
@@ -360,7 +532,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>vignesh Catering service / events</h1>
+            <h1>Vignesh Catering Service / Events</h1>
             <nav>
                 <a href="adminvignesh.html">Menu</a>
                 <a href="admingallery.html">Gallery</a>
@@ -368,47 +540,51 @@
                 <a href="adminevent.html">Events</a>
             </nav>
         </header>
-        <section id="event-form-section">
-            <h2>Add New Event</h2>
-            <form id="event-form" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="event-title">Event Title</label>
-                    <input type="text" id="event-title" name="title" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="event-date">Date</label>
-                    <input type="date" id="event-date" name="date" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="event-time">Time</label>
-                    <input type="time" id="event-time" name="time" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="event-location">Location</label>
-                    <input type="text" id="event-location" name="location" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="event-description">Description</label>
-                    <textarea id="event-description" name="description" rows="4" required></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="event-max-attendees">Maximum Attendees (Optional)</label>
-                    <input type="number" id="event-max-attendees" name="maxAttendees" min="1">
-                </div>
-                
-                <div class="form-group">
-                    <label for="event-image">Event Image</label>
-                    <input type="file" id="event-image" name="image" accept="image/*">
-                </div>
-                
-                <button type="submit">Add Event</button>
-            </form>
-        </section>
+       <!-- Update the form section to include a title and cancel button -->
+<section id="event-form-section">
+    <h2 id="form-title">Add New Event</h2>
+    <form id="event-form" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="event-title">Event Title</label>
+            <input type="text" id="event-title" name="title" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="event-date">Date</label>
+            <input type="date" id="event-date" name="date" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="event-time">Time</label>
+            <input type="time" id="event-time" name="time" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="event-location">Location</label>
+            <input type="text" id="event-location" name="location" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="event-description">Description</label>
+            <textarea id="event-description" name="description" rows="4" required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="event-max-attendees">Maximum Attendees (Optional)</label>
+            <input type="number" id="event-max-attendees" name="maxAttendees" min="1">
+        </div>
+        
+        <div class="form-group">
+            <label for="event-image">Event Image</label>
+            <input type="file" id="event-image" name="image" accept="image/*">
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit">Add Event</button>
+            <button type="button" id="cancel-edit-btn" class="cancel-btn" style="display: none;">Cancel</button>
+        </div>
+    </form>
+</section>
 
         <section id="events-section">
             <h2>Upcoming Events</h2>
@@ -424,219 +600,330 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const eventForm = document.getElementById('event-form');
-            const eventsContainer = document.getElementById('events-container');
-            const tabButtons = document.querySelectorAll('.tab-button');
+document.addEventListener('DOMContentLoaded', () => {
+    const eventForm = document.getElementById('event-form');
+    const eventsContainer = document.getElementById('events-container');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const formSubmitButton = eventForm.querySelector('button[type="submit"]');
+    const cancelButton = document.getElementById('cancel-edit-btn');
+    
+    // Base API URL - updated to use deployed endpoint
+    const BASE_URL = 'https://catering-backend-pewm.onrender.com';
+    const API_URL = `${BASE_URL}/api`;
+    
+    let currentStatus = 'upcoming'; // Default view
+    let currentEditingEventId = null; // Track which event is being edited
+    
+    // Format date for display
+    function formatDate(dateString) {
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString('en-US', options);
+    }
+    
+    // Format date for input field (YYYY-MM-DD)
+    function formatDateForInput(dateString) {
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    }
+    
+    // Format time for display
+    function formatTime(timeString) {
+        try {
+            const [hours, minutes] = timeString.split(':');
+            const date = new Date();
+            date.setHours(parseInt(hours));
+            date.setMinutes(parseInt(minutes));
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        } catch (e) {
+            return timeString;
+        }
+    }
+    
+    // Get date badge parts
+    function getDateBadgeParts(dateString) {
+        const date = new Date(dateString);
+        const month = date.toLocaleString('en-US', { month: 'short' });
+        const day = date.getDate();
+        return { month, day };
+    }
+    
+    // Check if event is full
+    function isEventFull(event) {
+        return event.maxAttendees && event.registeredAttendees >= event.maxAttendees;
+    }
+    
+    // Reset form to add mode
+    function resetFormToAddMode() {
+        eventForm.reset();
+        currentEditingEventId = null;
+        formSubmitButton.textContent = 'Add Event';
+        document.getElementById('form-title').textContent = 'Add New Event';
+        cancelButton.style.display = 'none';
+    }
+    
+    // Load event data into form for editing
+    function loadEventForEditing(event) {
+        document.getElementById('event-title').value = event.title;
+        document.getElementById('event-date').value = formatDateForInput(event.date);
+        document.getElementById('event-time').value = event.time;
+        document.getElementById('event-location').value = event.location;
+        document.getElementById('event-description').value = event.description;
+        document.getElementById('event-max-attendees').value = event.maxAttendees || '';
+        
+        // Update form state
+        currentEditingEventId = event._id;
+        formSubmitButton.textContent = 'Update Event';
+        document.getElementById('form-title').textContent = 'Edit Event';
+        cancelButton.style.display = 'block';
+        
+        // Scroll to the form
+        document.getElementById('event-form-section').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Fetch events based on status
+    async function fetchEvents(status = 'upcoming') {
+        try {
+            // Show loading indicator
+            eventsContainer.innerHTML = '<p>Loading events...</p>';
             
-            // Base API URL - updated to use deployed endpoint
-            const BASE_URL = 'https://catering-backend-pewm.onrender.com';
-            const API_URL = `${BASE_URL}/api`;
-            
-            let currentStatus = 'upcoming'; // Default view
-            
-            // Format date for display
-            function formatDate(dateString) {
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                return new Date(dateString).toLocaleDateString('en-US', options);
+            let url = `${API_URL}/events`;
+            if (status !== 'all') {
+                url += `?status=${status}`;
             }
             
-            // Format time for display
-            function formatTime(timeString) {
-                try {
-                    const [hours, minutes] = timeString.split(':');
-                    const date = new Date();
-                    date.setHours(parseInt(hours));
-                    date.setMinutes(parseInt(minutes));
-                    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                } catch (e) {
-                    return timeString;
-                }
+            const response = await fetch(url);
+            const events = await response.json();
+            
+            // Clear existing container
+            eventsContainer.innerHTML = '';
+            
+            if (events.length === 0) {
+                eventsContainer.innerHTML = '<p>No events found.</p>';
+                return;
             }
             
-            // Get date badge parts
-            function getDateBadgeParts(dateString) {
-                const date = new Date(dateString);
-                const month = date.toLocaleString('en-US', { month: 'short' });
-                const day = date.getDate();
-                return { month, day };
-            }
-            
-            // Check if event is full
-            function isEventFull(event) {
-                return event.maxAttendees && event.registeredAttendees >= event.maxAttendees;
-            }
-            
-            // Fetch events based on status
-            async function fetchEvents(status = 'upcoming') {
-                try {
-                    // Show loading indicator
-                    eventsContainer.innerHTML = '<p>Loading events...</p>';
-                    
-                    let url = `${API_URL}/events`;
-                    if (status !== 'all') {
-                        url += `?status=${status}`;
-                    }
-                    
-                    const response = await fetch(url);
-                    const events = await response.json();
-                    
-                    // Clear existing container
-                    eventsContainer.innerHTML = '';
-                    
-                    if (events.length === 0) {
-                        eventsContainer.innerHTML = '<p>No events found.</p>';
-                        return;
-                    }
-                    
-                    events.forEach((event, index) => {
-                        const eventCard = document.createElement('div');
-                        eventCard.classList.add('event-card');
-                        eventCard.style.animationDelay = `${index * 0.1}s`;
-                        
-                        const dateInfo = getDateBadgeParts(event.date);
-                        const isFull = isEventFull(event);
-                        
-                        // Build proper image URL
-                        let imageUrl;
-                        if (event.image) {
-                            imageUrl = `${BASE_URL}/uploads/images/events/${event.image}`;
-                        } else {
-                            imageUrl = 'https://via.placeholder.com/300x200?text=Event';
-                        }
-                        
-                        eventCard.innerHTML = `
-                            <div class="event-image">
-                                <img src="${imageUrl}" 
-                                    alt="${event.title}"
-                                    onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=No+Image';">
-                                <div class="event-date-badge">
-                                    <div>${dateInfo.month}</div>
-                                    <div>${dateInfo.day}</div>
-                                </div>
-                            </div>
-                            <div class="event-content">
-                                <h3 class="event-title">${event.title}</h3>
-                                <div class="event-meta">
-                                    <div><i class="fas fa-calendar-alt"></i> ${formatDate(event.date)}</div>
-                                    <div><i class="fas fa-clock"></i> ${formatTime(event.time)}</div>
-                                    <div><i class="fas fa-map-marker-alt"></i> ${event.location}</div>
-                                </div>
-                                <div class="event-description">${event.description}</div>
-                                <div class="event-footer">
-                                    <div class="event-attendees">
-                                        <i class="fas fa-users"></i> 
-                                        ${event.registeredAttendees} ${event.maxAttendees ? `/ ${event.maxAttendees}` : ''} attendees
-                                    </div>
-                                    <button class="register-btn" data-event-id="${event._id}" 
-                                        ${isFull || event.status === 'past' ? 'disabled' : ''}>
-                                        ${isFull ? 'Fully Booked' : event.status === 'past' ? 'Event Ended' : 'Register'}
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        
-                        eventsContainer.appendChild(eventCard);
-                    });
-                    
-                    // Add event listeners to register buttons
-                    document.querySelectorAll('.register-btn').forEach(button => {
-                        if (!button.disabled) {
-                            button.addEventListener('click', registerForEvent);
-                        }
-                    });
-                    
-                } catch (error) {
-                    console.error('Error fetching events:', error);
-                    eventsContainer.innerHTML = '<p>Error loading events. Please try again later.</p>';
-                }
-            }
-            
-            // Register for event
-            async function registerForEvent(e) {
-                const button = e.target;
-                const eventId = button.dataset.eventId;
+            events.forEach((event, index) => {
+                const eventCard = document.createElement('div');
+                eventCard.classList.add('event-card');
+                eventCard.style.animationDelay = `${index * 0.1}s`;
                 
-                try {
-                    button.disabled = true;
-                    button.textContent = 'Processing...';
-                    
-                    const response = await fetch(`${API_URL}/events/${eventId}/register`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        // Refresh events after registration
-                        alert('Registration successful! We look forward to seeing you.');
-                        fetchEvents(currentStatus);
-                    } else {
-                        const error = await response.json();
-                        alert(error.message || 'Failed to register for the event');
-                        button.disabled = false;
-                        button.textContent = 'Register';
-                    }
-                } catch (error) {
-                    console.error('Error registering for event:', error);
-                    alert('Failed to register for the event. Please try again.');
-                    button.disabled = false;
-                    button.textContent = 'Register';
+                const dateInfo = getDateBadgeParts(event.date);
+                const isFull = isEventFull(event);
+                
+                // Build proper image URL
+                let imageUrl;
+                if (event.image) {
+                    imageUrl = `${BASE_URL}/uploads/images/events/${event.image}`;
+                } else {
+                    // Use a data URI for placeholder instead of external URL
+                    imageUrl = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22300%22%20height%3D%22200%22%20viewBox%3D%220%200%20300%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22300%22%20height%3D%22200%22%20fill%3D%22%23cccccc%22%3E%3C%2Frect%3E%3Ctext%20x%3D%22150%22%20y%3D%22100%22%20font-size%3D%2220%22%20alignment-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333333%22%3EEvent%20Image%3C%2Ftext%3E%3C%2Fsvg%3E';
                 }
-            }
+                
+                eventCard.innerHTML = `
+                    <div class="event-image">
+                        <img src="${imageUrl}" alt="${event.title}"
+                            onerror="this.onerror=null; this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22300%22%20height%3D%22200%22%20viewBox%3D%220%200%20300%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22300%22%20height%3D%22200%22%20fill%3D%22%23cccccc%22%3E%3C%2Frect%3E%3Ctext%20x%3D%22150%22%20y%3D%22100%22%20font-size%3D%2220%22%20alignment-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333333%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                        <div class="event-date-badge">
+                            <div>${dateInfo.month}</div>
+                            <div>${dateInfo.day}</div>
+                        </div>
+                    </div>
+                    <div class="event-content">
+                        <h3 class="event-title">${event.title}</h3>
+                        <div class="event-meta">
+                            <div><i class="fas fa-calendar-alt"></i> ${formatDate(event.date)}</div>
+                            <div><i class="fas fa-clock"></i> ${formatTime(event.time)}</div>
+                            <div><i class="fas fa-map-marker-alt"></i> ${event.location}</div>
+                        </div>
+                        <div class="event-description">${event.description}</div>
+                        <div class="event-footer">
+                            <div class="event-attendees">
+                                <i class="fas fa-users"></i> 
+                                ${event.registeredAttendees} ${event.maxAttendees ? `/ ${event.maxAttendees}` : ''} attendees
+                            </div>
+                            <div class="button-group">
+                                <button class="register-btn" data-event-id="${event._id}" 
+                                    ${isFull || event.status === 'past' ? 'disabled' : ''}>
+                                    ${isFull ? 'Fully Booked' : event.status === 'past' ? 'Event Ended' : 'Register'}
+                                </button>
+                                <button class="edit-btn" data-event-id="${event._id}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="delete-btn" data-event-id="${event._id}">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                eventsContainer.appendChild(eventCard);
+            });
             
-            // Tab navigation
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    currentStatus = button.dataset.status;
-                    fetchEvents(currentStatus);
+            // Add event listeners to buttons
+            document.querySelectorAll('.register-btn').forEach(button => {
+                if (!button.disabled) {
+                    button.addEventListener('click', registerForEvent);
+                }
+            });
+            
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const eventId = e.currentTarget.dataset.eventId;
+                    editEvent(eventId);
                 });
             });
             
-            // Add event
-            eventForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const eventId = e.currentTarget.dataset.eventId;
+                    deleteEvent(eventId);
+                });
+            });
+            
+        } catch (error) {
+            console.error('Error fetching events:', error);
+            eventsContainer.innerHTML = '<p>Error loading events. Please try again later.</p>';
+        }
+    }
+    
+    // Edit event - fetch and load data
+    async function editEvent(eventId) {
+        try {
+            const response = await fetch(`${API_URL}/events/${eventId}`);
+            if (response.ok) {
+                const event = await response.json();
+                loadEventForEditing(event);
+            } else {
+                alert('Failed to load event details');
+            }
+        } catch (error) {
+            console.error('Error fetching event details:', error);
+            alert('Failed to load event details. Please try again.');
+        }
+    }
+    
+    // Delete event
+    async function deleteEvent(eventId) {
+        if (confirm('Are you sure you want to delete this event?')) {
+            try {
+                const response = await fetch(`${API_URL}/events/${eventId}`, {
+                    method: 'DELETE'
+                });
                 
-                const formData = new FormData(eventForm);
-                
-                try {
-                    const submitBtn = eventForm.querySelector('button[type="submit"]');
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Submitting...';
-                    
-                    const response = await fetch(`${API_URL}/events`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (response.ok) {
-                        eventForm.reset();
-                        // Refresh events list
-                        fetchEvents(currentStatus);
-                        alert('Event added successfully!');
-                    } else {
-                        const errorData = await response.json();
-                        alert(`Error adding event: ${errorData.message}`);
-                    }
-                    
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Add Event';
-                } catch (error) {
-                    console.error('Error adding event:', error);
-                    alert('Failed to add event. Please try again.');
-                    
-                    const submitBtn = eventForm.querySelector('button[type="submit"]');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Add Event';
+                if (response.ok) {
+                    alert('Event deleted successfully');
+                    fetchEvents(currentStatus);
+                } else {
+                    const errorData = await response.json();
+                    alert(`Failed to delete event: ${errorData.message}`);
+                }
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                alert('Failed to delete event. Please try again.');
+            }
+        }
+    }
+    
+    // Register for event
+    async function registerForEvent(e) {
+        const button = e.currentTarget;
+        const eventId = button.dataset.eventId;
+        
+        try {
+            button.disabled = true;
+            button.textContent = 'Processing...';
+            
+            const response = await fetch(`${API_URL}/events/${eventId}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
             });
             
-            // Initial fetch of events
-            fetchEvents('upcoming');
+            if (response.ok) {
+                // Refresh events after registration
+                alert('Registration successful! We look forward to seeing you.');
+                fetchEvents(currentStatus);
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Failed to register for the event');
+                button.disabled = false;
+                button.textContent = 'Register';
+            }
+        } catch (error) {
+            console.error('Error registering for event:', error);
+            alert('Failed to register for the event. Please try again.');
+            button.disabled = false;
+            button.textContent = 'Register';
+        }
+    }
+    
+    // Tab navigation
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            currentStatus = button.dataset.status;
+            fetchEvents(currentStatus);
         });
-        </script>
+    });
+    
+    // Add/Edit event form submission
+    eventForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(eventForm);
+        let url, method;
+        
+        // If we're editing, use PUT method and include event ID
+        if (currentEditingEventId) {
+            url = `${API_URL}/events/${currentEditingEventId}`;
+            method = 'PUT';
+        } else {
+            url = `${API_URL}/events`;
+            method = 'POST';
+        }
+        
+        try {
+            formSubmitButton.disabled = true;
+            formSubmitButton.textContent = currentEditingEventId ? 'Updating...' : 'Submitting...';
+            
+            const response = await fetch(url, {
+                method: method,
+                body: formData
+            });
+            
+            if (response.ok) {
+                resetFormToAddMode();
+                // Refresh events list
+                fetchEvents(currentStatus);
+                alert(currentEditingEventId ? 'Event updated successfully!' : 'Event added successfully!');
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.message}`);
+            }
+            
+            formSubmitButton.disabled = false;
+            formSubmitButton.textContent = currentEditingEventId ? 'Update Event' : 'Add Event';
+        } catch (error) {
+            console.error(`Error ${currentEditingEventId ? 'updating' : 'adding'} event:`, error);
+            alert(`Failed to ${currentEditingEventId ? 'update' : 'add'} event. Please try again.`);
+            
+            formSubmitButton.disabled = false;
+            formSubmitButton.textContent = currentEditingEventId ? 'Update Event' : 'Add Event';
+        }
+    });
+    
+    // Add cancel button event listener
+    cancelButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        resetFormToAddMode();
+    });
+    
+    // Initial fetch of events
+    fetchEvents('upcoming');
+});
+    </script>
 </body>
 </html>
