@@ -15,31 +15,17 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enhanced CORS configuration
+// Middleware
 app.use(cors({
-    origin: ['https://vignesh-catering-services.vercel.app', 'http://localhost:3000', '*'], // Whitelist specific origins
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-    credentials: false, // Set to true only if you need to pass cookies
-    preflightContinue: false,
-    optionsSuccessStatus: 204
+    origin: '*', // Be more specific in production
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
 }));
-
-// Body parsing middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Static files middleware
+// Serve static files
 app.use(express.static(path.join(__dirname, '../public')));
-
-// Static files middleware with enhanced CORS headers for uploads
-app.use('/uploads', (req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
-    res.header('Cross-Origin-Resource-Policy', 'cross-origin');
-    next();
-}, express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Ensure uploads directories exist
 const dirs = [
@@ -93,9 +79,6 @@ const upload = multer({
     }
 });
 
-// Custom OPTIONS handler for preflight requests
-app.options('*', cors());
-
 // Routes
 app.use('/api/menu', menuRoutes);
 app.use('/api/media', mediaRoutes);
@@ -103,15 +86,10 @@ app.use('/api/events', eventRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/service-videos', serviceVideoRoutes);
 
-// Basic route for testing
-app.get('/api/test', (req, res) => {
-    res.json({ message: 'API is working!' });
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({
+    res.status(500).send({
         message: 'Something went wrong!',
         error: err.message
     });
