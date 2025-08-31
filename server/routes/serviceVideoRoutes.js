@@ -1,13 +1,14 @@
+// routes/serviceVideoRoutes.js
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
 const mongoose = require('mongoose');
+const { serviceVideoUpload, cloudinary } = require('../config/cloudinary');
 
 // Define ServiceVideo Schema
 const serviceVideoSchema = new mongoose.Schema({
     title: { type: String, required: true },
-    filename: { type: String, required: true },
+    filename: { type: String, required: true }, // Cloudinary public_id
+    videoUrl: { type: String, required: true }, // Cloudinary secure_url
     description: { type: String },
     service: { type: String, required: true }, // e.g., "catering", "events", "cooking"
     featured: { type: Boolean, default: false },
@@ -16,33 +17,8 @@ const serviceVideoSchema = new mongoose.Schema({
 
 const ServiceVideo = mongoose.model('ServiceVideo', serviceVideoSchema);
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, '../../uploads/service-videos'));
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '-'));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = ['video/mp4', 'video/mpeg', 'video/webm', 'video/quicktime'];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type. Only video files are allowed.'));
-        }
-    },
-    limits: {
-        fileSize: 100 * 1024 * 1024 // 100MB max file size
-    }
-});
-
 // Upload service video
-router.post('/upload', upload.single('video'), async (req, res) => {
+router.post('/upload', serviceVideoUpload.single('video'), async (req, res) => {
     try {
         // Validate request
         if (!req.file) {
@@ -56,7 +32,8 @@ router.post('/upload', upload.single('video'), async (req, res) => {
         // Create new service video entry
         const serviceVideo = new ServiceVideo({
             title: req.body.title,
-            filename: req.file.filename,
+            filename: req.file.public_id,
+            videoUrl: req.file.secure_url,
             description: req.body.description || '',
             service: req.body.service,
             featured: req.body.featured === 'true'
@@ -131,13 +108,21 @@ router.put('/:id', async (req, res) => {
 // Delete a video
 router.delete('/:id', async (req, res) => {
     try {
-        const video = await ServiceVideo.findByIdAndDelete(req.params.id);
+        const video = await ServiceVideo.findById(req.params.id);
         
         if (!video) {
             return res.status(404).json({ message: 'Video not found' });
         }
         
-        // Note: You may want to add file system cleanup here to delete the actual file
+        // Delete from Cloudinary
+        try {
+            await cloudinary.uploader.destroy(video.filename, { resource_type: 'video' });
+        } catch (cloudinaryError) {
+            console.error('Error deleting from Cloudinary:', cloudinaryError);
+        }
+        
+        // Delete from database
+        await ServiceVideo.findByIdAndDelete(req.params.id);
         
         res.json({ message: 'Video deleted successfully' });
     } catch (error) {

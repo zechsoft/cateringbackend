@@ -1,32 +1,8 @@
+// routes/blogRoutes.js
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { blogImageUpload, cloudinary } = require('../config/cloudinary');
 const Blog = require('../models/blogModel');
-
-// Set up multer for blog image uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../uploads/images/blogs');
-        cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed.'));
-        }
-    }
-});
 
 // Get all blogs
 router.get('/', async (req, res) => {
@@ -53,7 +29,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new blog post with image upload
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', blogImageUpload.single('image'), async (req, res) => {
     try {
         const blogData = {
             title: req.body.title,
@@ -64,7 +40,8 @@ router.post('/', upload.single('image'), async (req, res) => {
         };
 
         if (req.file) {
-            blogData.imageUrl = `/uploads/images/blogs/${req.file.filename}`;
+            blogData.imageUrl = req.file.secure_url;
+            blogData.imagePublicId = req.file.public_id;
         }
 
         const blog = new Blog(blogData);
@@ -76,7 +53,7 @@ router.post('/', upload.single('image'), async (req, res) => {
 });
 
 // Update a blog post
-router.put('/:id', upload.single('image'), async (req, res) => {
+router.put('/:id', blogImageUpload.single('image'), async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id);
         if (!blog) {
@@ -95,14 +72,17 @@ router.put('/:id', upload.single('image'), async (req, res) => {
         
         // Handle image update
         if (req.file) {
-            // Delete old image if it exists
-            if (blog.imageUrl) {
-                const oldImagePath = path.join(__dirname, '../../', blog.imageUrl);
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath);
+            // Delete old image from Cloudinary if it exists
+            if (blog.imagePublicId) {
+                try {
+                    await cloudinary.uploader.destroy(blog.imagePublicId);
+                } catch (cloudinaryError) {
+                    console.error('Error deleting old image from Cloudinary:', cloudinaryError);
                 }
             }
-            blog.imageUrl = `/uploads/images/blogs/${req.file.filename}`;
+            
+            blog.imageUrl = req.file.secure_url;
+            blog.imagePublicId = req.file.public_id;
         }
 
         const updatedBlog = await blog.save();
@@ -120,11 +100,12 @@ router.delete('/:id', async (req, res) => {
             return res.status(404).json({ message: 'Blog not found' });
         }
 
-        // Delete associated image if it exists
-        if (blog.imageUrl) {
-            const imagePath = path.join(__dirname, '../../', blog.imageUrl);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+        // Delete associated image from Cloudinary if it exists
+        if (blog.imagePublicId) {
+            try {
+                await cloudinary.uploader.destroy(blog.imagePublicId);
+            } catch (cloudinaryError) {
+                console.error('Error deleting image from Cloudinary:', cloudinaryError);
             }
         }
 

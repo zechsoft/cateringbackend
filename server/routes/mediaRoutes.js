@@ -1,46 +1,43 @@
+// routes/mediaRoutes.js
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { imageUpload, videoUpload, cloudinary } = require('../config/cloudinary');
 const Media = require('../models/mediaModel');
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadPath = file.mimetype.startsWith('image')
-            ? './uploads/images'
-            : './uploads/videos';
-        cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
+// Updated Media Schema (add this to your mediaModel.js)
+const mediaSchema = new mongoose.Schema({
+    type: { type: String, enum: ['image', 'video'], required: true },
+    title: { type: String },
+    filename: { type: String, required: true }, // Cloudinary public_id
+    mediaUrl: { type: String, required: true }, // Cloudinary secure_url
+    description: { type: String },
+    uploadDate: { type: Date, default: Date.now }
 });
 
-const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/mpeg'];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type'));
-        }
-    }
-});
-
-// Upload media
-router.post('/upload', upload.single('media'), async (req, res) => {
+// Upload media with dynamic multer based on file type
+router.post('/upload', (req, res, next) => {
+    // Determine upload type based on the file
+    const uploadMiddleware = req.headers['content-type']?.includes('video') 
+        ? videoUpload.single('media')
+        : imageUpload.single('media');
+    
+    uploadMiddleware(req, res, next);
+}, async (req, res) => {
     try {
-        const mediaType = req.file.mimetype.startsWith('image') ? 'image' : 'video';
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const mediaType = req.file.resource_type === 'video' ? 'video' : 'image';
+        
         const media = new Media({
             type: mediaType,
-            filename: req.file.filename,
+            filename: req.file.public_id,
+            mediaUrl: req.file.secure_url,
             title: req.body.title || '',
             description: req.body.description || ''
         });
-                
+
         const savedMedia = await media.save();
         res.status(201).json(savedMedia);
     } catch (error) {
@@ -51,7 +48,7 @@ router.post('/upload', upload.single('media'), async (req, res) => {
 // Get all media
 router.get('/', async (req, res) => {
     try {
-        const media = await Media.find();
+        const media = await Media.find().sort({ uploadDate: -1 });
         res.json(media);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -61,7 +58,7 @@ router.get('/', async (req, res) => {
 // Get media by type
 router.get('/:type', async (req, res) => {
     try {
-        const media = await Media.find({ type: req.params.type });
+        const media = await Media.find({ type: req.params.type }).sort({ uploadDate: -1 });
         res.json(media);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -77,11 +74,11 @@ router.put('/:id', async (req, res) => {
             { title, description },
             { new: true }
         );
-        
+
         if (!updatedMedia) {
             return res.status(404).json({ message: 'Media not found' });
         }
-        
+
         res.json(updatedMedia);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -92,27 +89,22 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const media = await Media.findById(req.params.id);
-        
+
         if (!media) {
             return res.status(404).json({ message: 'Media not found' });
         }
-        
-        // Delete the file from the filesystem
-        const filePath = path.join(
-            __dirname, 
-            '../uploads', 
-            media.type === 'image' ? 'images' : 'videos', 
-            media.filename
-        );
-        
-        // Check if file exists before attempting to delete
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+
+        // Delete from Cloudinary
+        try {
+            const resourceType = media.type === 'video' ? 'video' : 'image';
+            await cloudinary.uploader.destroy(media.filename, { resource_type: resourceType });
+        } catch (cloudinaryError) {
+            console.error('Error deleting from Cloudinary:', cloudinaryError);
         }
-        
+
         // Remove from database
         await Media.findByIdAndDelete(req.params.id);
-        
+
         res.json({ message: 'Media deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });

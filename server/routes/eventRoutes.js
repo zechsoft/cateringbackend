@@ -1,33 +1,11 @@
+// routes/eventRoutes.js
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
+const { eventImageUpload, cloudinary } = require('../config/cloudinary');
 const Event = require('../models/eventModel');
 
-// Multer storage configuration for event images
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, './uploads/images/events');
-    },
-    filename: (req, file, cb) => {
-        cb(null, 'event-' + Date.now() + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed.'));
-        }
-    }
-});
-
 // Create new event
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', eventImageUpload.single('image'), async (req, res) => {
     try {
         const eventData = {
             title: req.body.title,
@@ -41,7 +19,8 @@ router.post('/', upload.single('image'), async (req, res) => {
 
         // Add image if uploaded
         if (req.file) {
-            eventData.image = req.file.filename;
+            eventData.imageUrl = req.file.secure_url;
+            eventData.imagePublicId = req.file.public_id;
         }
 
         const event = new Event(eventData);
@@ -98,33 +77,38 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update event
-router.put('/:id', upload.single('image'), async (req, res) => {
+router.put('/:id', eventImageUpload.single('image'), async (req, res) => {
     try {
-        const eventData = {
-            title: req.body.title,
-            description: req.body.description,
-            date: new Date(req.body.date),
-            time: req.body.time,
-            location: req.body.location,
-            maxAttendees: req.body.maxAttendees || null,
-            status: req.body.status
-        };
-
-        // Add image if uploaded
-        if (req.file) {
-            eventData.image = req.file.filename;
-        }
-
-        const updatedEvent = await Event.findByIdAndUpdate(
-            req.params.id, 
-            eventData, 
-            { new: true }
-        );
-        
-        if (!updatedEvent) {
+        const event = await Event.findById(req.params.id);
+        if (!event) {
             return res.status(404).json({ message: 'Event not found' });
         }
-        
+
+        // Update event fields
+        event.title = req.body.title || event.title;
+        event.description = req.body.description || event.description;
+        event.date = req.body.date ? new Date(req.body.date) : event.date;
+        event.time = req.body.time || event.time;
+        event.location = req.body.location || event.location;
+        event.maxAttendees = req.body.maxAttendees || event.maxAttendees;
+        event.status = req.body.status || event.status;
+
+        // Handle image update
+        if (req.file) {
+            // Delete old image from Cloudinary if it exists
+            if (event.imagePublicId) {
+                try {
+                    await cloudinary.uploader.destroy(event.imagePublicId);
+                } catch (cloudinaryError) {
+                    console.error('Error deleting old image from Cloudinary:', cloudinaryError);
+                }
+            }
+            
+            event.imageUrl = req.file.secure_url;
+            event.imagePublicId = req.file.public_id;
+        }
+
+        const updatedEvent = await event.save();
         res.json(updatedEvent);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -134,12 +118,22 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 // Delete event
 router.delete('/:id', async (req, res) => {
     try {
-        const deletedEvent = await Event.findByIdAndDelete(req.params.id);
+        const event = await Event.findById(req.params.id);
         
-        if (!deletedEvent) {
+        if (!event) {
             return res.status(404).json({ message: 'Event not found' });
         }
         
+        // Delete associated image from Cloudinary if it exists
+        if (event.imagePublicId) {
+            try {
+                await cloudinary.uploader.destroy(event.imagePublicId);
+            } catch (cloudinaryError) {
+                console.error('Error deleting image from Cloudinary:', cloudinaryError);
+            }
+        }
+        
+        await Event.findByIdAndDelete(req.params.id);
         res.json({ message: 'Event deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });

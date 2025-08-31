@@ -1,3 +1,4 @@
+// server.js (or app.js)
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -8,9 +9,6 @@ const mediaRoutes = require('./routes/mediaRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const serviceVideoRoutes = require('./routes/serviceVideoRoutes');
-
-const multer = require('multer');
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,61 +21,11 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files
+// Serve static files (keep for other static content)
 app.use(express.static(path.join(__dirname, '../public')));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Ensure uploads directories exist
-const dirs = [
-    '../uploads/images',
-    '../uploads/videos',
-    '../uploads/images/events',
-    '../uploads/images/blogs',
-    '../uploads/service-videos'
-];
-
-dirs.forEach(dir => {
-    const fullPath = path.join(__dirname, dir);
-    if (!fs.existsSync(fullPath)) {
-        fs.mkdirSync(fullPath, { recursive: true });
-    }
-});
 
 // Database Connection
 connectDB();
-
-// File Upload Configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        let uploadPath;
-        
-        if (req.path.includes('/blogs')) {
-            uploadPath = path.join(__dirname, '../uploads/images/blogs');
-        } else {
-            const isImage = file.mimetype.startsWith('image');
-            uploadPath = isImage 
-                ? path.join(__dirname, '../uploads/images')
-                : path.join(__dirname, '../uploads/videos');
-        }
-        
-        cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/mpeg'];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type'));
-        }
-    }
-});
 
 // Routes
 app.use('/api/menu', menuRoutes);
