@@ -1,4 +1,3 @@
-// server.js (or app.js)
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -21,7 +20,7 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files (keep for other static content)
+// Serve static files (keep for other static content like CSS, JS, etc.)
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Database Connection
@@ -37,6 +36,17 @@ app.use('/api/service-videos', serviceVideoRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
+    
+    // Handle Multer errors
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: 'File too large' });
+    }
+    
+    // Handle Cloudinary errors
+    if (err.message && err.message.includes('Invalid file type')) {
+        return res.status(400).json({ message: err.message });
+    }
+    
     res.status(500).send({
         message: 'Something went wrong!',
         error: err.message
@@ -46,4 +56,5 @@ app.use((err, req, res, next) => {
 // Start Server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log('Cloudinary integration active - all media uploads will be stored in the cloud');
 });

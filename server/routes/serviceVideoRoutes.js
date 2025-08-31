@@ -1,21 +1,7 @@
-// routes/serviceVideoRoutes.js
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
 const { serviceVideoUpload, cloudinary } = require('../config/cloudinary');
-
-// Define ServiceVideo Schema
-const serviceVideoSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    filename: { type: String, required: true }, // Cloudinary public_id
-    videoUrl: { type: String, required: true }, // Cloudinary secure_url
-    description: { type: String },
-    service: { type: String, required: true }, // e.g., "catering", "events", "cooking"
-    featured: { type: Boolean, default: false },
-    uploadDate: { type: Date, default: Date.now }
-});
-
-const ServiceVideo = mongoose.model('ServiceVideo', serviceVideoSchema);
+const ServiceVideo = require('../models/serviceVideoModel');
 
 // Upload service video
 router.post('/upload', serviceVideoUpload.single('video'), async (req, res) => {

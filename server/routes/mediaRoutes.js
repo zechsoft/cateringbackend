@@ -1,18 +1,7 @@
-// routes/mediaRoutes.js
 const express = require('express');
 const router = express.Router();
 const { imageUpload, videoUpload, cloudinary } = require('../config/cloudinary');
 const Media = require('../models/mediaModel');
-
-// Updated Media Schema (add this to your mediaModel.js)
-const mediaSchema = new mongoose.Schema({
-    type: { type: String, enum: ['image', 'video'], required: true },
-    title: { type: String },
-    filename: { type: String, required: true }, // Cloudinary public_id
-    mediaUrl: { type: String, required: true }, // Cloudinary secure_url
-    description: { type: String },
-    uploadDate: { type: Date, default: Date.now }
-});
 
 // Upload media with dynamic multer based on file type
 router.post('/upload', (req, res, next) => {
