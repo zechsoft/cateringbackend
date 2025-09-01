@@ -4,20 +4,31 @@ const { imageUpload, videoUpload, cloudinary } = require('../config/cloudinary')
 const Media = require('../models/mediaModel');
 
 // Upload media with dynamic multer based on file type
-router.post('/upload', (req, res, next) => {
-    // Determine upload type based on the file
-    const uploadMiddleware = req.headers['content-type']?.includes('video') 
-        ? videoUpload.single('media')
-        : imageUpload.single('media');
-    
-    uploadMiddleware(req, res, next);
-}, async (req, res) => {
+router.post('/upload', async (req, res) => {
     try {
+        // Determine upload type based on the media type field
+        const mediaType = req.body.type;
+        
+        if (!mediaType) {
+            return res.status(400).json({ message: 'Media type is required' });
+        }
+        
+        // Choose the appropriate upload middleware
+        const uploadMiddleware = mediaType === 'video' 
+            ? videoUpload.single('media')
+            : imageUpload.single('media');
+        
+        // Use middleware with promise wrapper
+        await new Promise((resolve, reject) => {
+            uploadMiddleware(req, res, (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+        
         if (!req.file) {
             return res.status(400).json({ message: 'No file uploaded' });
         }
-
-        const mediaType = req.file.resource_type === 'video' ? 'video' : 'image';
         
         const media = new Media({
             type: mediaType,
@@ -26,14 +37,14 @@ router.post('/upload', (req, res, next) => {
             title: req.body.title || '',
             description: req.body.description || ''
         });
-
+        
         const savedMedia = await media.save();
         res.status(201).json(savedMedia);
     } catch (error) {
+        console.error('Upload error:', error);
         res.status(400).json({ message: error.message });
     }
 });
-
 // Get all media
 router.get('/', async (req, res) => {
     try {
